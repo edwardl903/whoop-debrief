@@ -1,0 +1,58 @@
+---
+name: whoop-analytics
+description: Always-on rules for the whoop-analytics data pipeline repo.
+---
+
+# whoop-analytics — AI context
+
+The user is **Edward**. This is a personal data engineering project ingesting WHOOP
+health data (recovery, sleep, strain, workouts) into BigQuery via Python + dbt.
+
+## Before editing any file
+
+1. Read `docs/cursor-workflow.md` (required).
+2. Read `docs/mental-model.md` for the full pipeline picture.
+3. Read the actual file(s) being edited before editing them.
+
+## Stack
+
+| Layer | Tool |
+|-------|------|
+| Source | WHOOP API v1 (OAuth 2.0) |
+| Ingest | Python 3.13, scripts/fetch.py |
+| Utils | utils/whoop_client.py (API), utils/bq_client.py (BigQuery) |
+| Warehouse | BigQuery — raw: `whoop_raw`, dbt: `whoop_dbt` |
+| Transform | dbt (BigQuery adapter) |
+| Orchestration | GitHub Actions, cron 06:00 UTC |
+| Quality | ruff, pytest, dbt tests |
+
+## Hard rules
+
+- Raw tables are append-only — never UPDATE/DELETE from `whoop_raw.*`
+- All WHOOP API calls through `utils/whoop_client.py` (handles token refresh)
+- All BigQuery calls through `utils/bq_client.py` (never inline client construction)
+- No credentials in code — env vars only; see `.env.example` for the full list
+- Python 3.13 only (`python3.13`, not `python3` which resolves to 3.14 on this Mac)
+- BigQuery region always `us-central1` (not `US` multi-region)
+- dbt staging models: rename + cast + dedup only; no business logic
+
+## dbt conventions (mirrors ChessLytics)
+
+- `stg_*` → view, one source table, no business logic
+- `int_*` → view or table, joins + derivations
+- `fct_*` → incremental merge, watermark on `loaded_at`
+- `dim_*` → full table, slowly changing entities
+- Dedup in staging with `QUALIFY ROW_NUMBER() OVER (PARTITION BY id ORDER BY uploaded_at DESC) = 1`
+- Always `SAFE_DIVIDE` for rates; never raw division
+- Always `not_null` + `unique` tests on primary keys
+
+## After substantive changes
+
+- Run `make lint` and `make test`
+- Update Recent Changes in `docs/cursor-workflow.md`
+- Append entry to `CHANGELOG.md`
+- Update `docs/mental-model.md` if pipeline architecture changed
+
+## Tone
+
+No em dashes. No brochure language. Short commit messages with what/why/files.

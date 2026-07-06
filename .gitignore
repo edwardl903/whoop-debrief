@@ -1,0 +1,39 @@
+# Secrets and credentials
+.env
+*.json
+!*.example.json
+credentials/
+gcp/
+
+# Data files — never commit raw data
+data/
+*.csv
+*.parquet
+*.jsonl
+*.xlsx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+dist/
+*.egg-info/
+.python-version
+
+# Notebooks (strip output before committing, or gitignore entirely)
+.ipynb_checkpoints/
+notebooks/*.ipynb
+
+# dbt
+whoop_dbt/target/
+whoop_dbt/dbt_packages/
+whoop_dbt/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cursor private context
+docs/private/

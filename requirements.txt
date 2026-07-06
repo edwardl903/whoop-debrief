@@ -1,0 +1,23 @@
+# Core data
+pandas>=2.0
+pyarrow
+
+# BigQuery
+google-cloud-bigquery
+google-auth
+google-auth-oauthlib
+
+# HTTP / OAuth
+requests
+requests-oauthlib
+
+# dbt
+dbt-bigquery
+
+# Quality
+ruff
+pytest
+pytest-cov
+
+# Utilities
+python-dotenv
