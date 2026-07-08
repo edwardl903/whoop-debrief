@@ -1,4 +1,4 @@
-.PHONY: auth fetch load reset-tables dbt-run dbt-test all lint format test
+.PHONY: auth fetch reset-tables dbt-run dbt-test all lint format test
 
 PYTHON ?= python
 export PYTHONPATH := .
@@ -10,10 +10,6 @@ auth:
 # Fetch new data from WHOOP API (pass ARGS="--dry-run" to skip BigQuery writes)
 fetch:
 	$(PYTHON) scripts/fetch.py $(ARGS)
-
-# Load raw data to BigQuery
-load:
-	$(PYTHON) scripts/load.py
 
 # Drop and recreate all raw tables (use when schemas change)
 reset-tables:
@@ -33,7 +29,7 @@ dbt-snapshot:
 	cd whoop_dbt && dbt snapshot
 
 # Full nightly pipeline
-all: fetch load dbt-seed dbt-snapshot dbt-run dbt-test
+all: fetch dbt-seed dbt-snapshot dbt-run dbt-test
 
 # Code quality
 lint:

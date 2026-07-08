@@ -85,7 +85,7 @@ Either drop your service account JSON at `gcp/service_account.json`, or set
 ### 5. Run the pipeline
 
 ```bash
-make all        # fetch → load → dbt seed → dbt snapshot → dbt run → dbt test
+make all        # fetch → dbt seed → dbt snapshot → dbt run → dbt test
 make fetch      # ingest only
 make dbt-run    # transform only
 ```
