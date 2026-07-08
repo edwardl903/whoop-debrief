@@ -1,0 +1,72 @@
+"""Centralized configuration loaded from environment variables.
+
+All modules import from here. No module reads os.environ directly.
+"""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+_REQUIRED = [
+    "WHOOP_CLIENT_ID",
+    "WHOOP_CLIENT_SECRET",
+    "WHOOP_REDIRECT_URI",
+    "WHOOP_ACCESS_TOKEN",
+    "WHOOP_REFRESH_TOKEN",
+    "BQ_PROJECT",
+]
+
+
+@dataclass(frozen=True)
+class Config:
+    # WHOOP OAuth 2.0
+    whoop_client_id: str
+    whoop_client_secret: str
+    whoop_redirect_uri: str
+    whoop_access_token: str
+    whoop_refresh_token: str
+
+    # BigQuery
+    bq_project: str
+    bq_dataset_raw: str
+    bq_dataset_dbt: str
+    bq_location: str
+
+    # GCP auth: one of these must be set.
+    # google_credentials_json: full SA JSON as a string (GitHub Actions secret).
+    # google_credentials_path: path to SA JSON file (local dev).
+    google_credentials_json: str | None
+    google_credentials_path: str | None
+
+
+def load_config() -> Config:
+    """Load and validate config from environment. Raises EnvironmentError on missing vars."""
+    missing = [k for k in _REQUIRED if not os.getenv(k)]
+    if missing:
+        raise EnvironmentError(f"Missing required env vars: {', '.join(missing)}")
+
+    creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    if not creds_json and not creds_path:
+        raise EnvironmentError(
+            "Must set GOOGLE_APPLICATION_CREDENTIALS_JSON (Actions) "
+            "or GOOGLE_APPLICATION_CREDENTIALS (local path)"
+        )
+
+    return Config(
+        whoop_client_id=os.environ["WHOOP_CLIENT_ID"],
+        whoop_client_secret=os.environ["WHOOP_CLIENT_SECRET"],
+        whoop_redirect_uri=os.environ["WHOOP_REDIRECT_URI"],
+        whoop_access_token=os.environ["WHOOP_ACCESS_TOKEN"],
+        whoop_refresh_token=os.environ["WHOOP_REFRESH_TOKEN"],
+        bq_project=os.environ["BQ_PROJECT"],
+        bq_dataset_raw=os.getenv("BQ_DATASET_RAW", "whoop_raw"),
+        bq_dataset_dbt=os.getenv("BQ_DATASET_DBT", "whoop_dbt"),
+        bq_location=os.getenv("BQ_LOCATION", "us-central1"),
+        google_credentials_json=creds_json,
+        google_credentials_path=creds_path,
+    )

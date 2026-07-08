@@ -159,11 +159,18 @@ my_trends  (table, full rebuild)
 
 | Issue | Priority | Notes |
 |-------|----------|-------|
-| OAuth token refresh not implemented | High | Needed before first real run |
-| Incremental fetch logic not implemented | High | Currently would re-fetch all history on each run |
 | dbt staging models not written | High | Blocking everything downstream |
 | GCP project ID not configured | High | Fill in after first GCP setup |
 | Serve layer undefined | Low | Decide: portfolio page, personal dashboard, or API |
+| dbt source freshness tests | Low | Add warn_after/error_after on raw sources |
+| dbt documentation site | Low | dbt docs generate + GitHub Pages |
+
+### Resolved
+
+| Issue | Resolved | Notes |
+|-------|----------|-------|
+| OAuth token refresh not implemented | 2026-07-07 | Implemented in utils/whoop_client.py — auto-refreshes on 401 |
+| Incremental fetch logic not implemented | 2026-07-07 | MAX(watermark_col) from BigQuery in utils/bq_client.get_watermark() |
 
 ---
 
@@ -176,4 +183,4 @@ my_trends  (table, full rebuild)
 
 ---
 
-*Last updated: 2026-07-05 — initial scaffold*
+*Last updated: 2026-07-07 — ingest layer implemented*

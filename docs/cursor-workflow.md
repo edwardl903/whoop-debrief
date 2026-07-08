@@ -58,7 +58,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 | Pipeline schedule | GitHub Actions, 06:00 UTC daily |
 | Auth | WHOOP OAuth 2.0; tokens in `.env` (gitignored) |
 | Python version | 3.13 |
-| Status | Scaffolded — ingest + dbt not yet implemented |
+| Status | Ingest layer complete — dbt not yet implemented |
 
 ---
 
@@ -81,4 +81,5 @@ Files: scripts/fetch.py, utils/bq_client.py
 
 | Date | Change |
 |------|--------|
+| 2026-07-07 | Ingest layer implemented: utils/config.py, utils/logging_setup.py, utils/whoop_client.py, utils/bq_client.py, scripts/auth.py, scripts/fetch.py, tests/ (51 tests, 0 failures). docs/portfolio-story.md added. |
 | 2026-07-05 | Initial scaffold: folder structure, .gitignore, .env.example, requirements.txt, Makefile, README, GitHub Actions workflow, docs, Cursor rules |
