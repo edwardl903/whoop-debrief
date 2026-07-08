@@ -29,6 +29,8 @@ jobs:
 
       - name: Run fetch
         env:
+          PYTHONPATH: .
+          BQ_PROJECT: ${{ vars.BQ_PROJECT }}
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
           WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
           WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
