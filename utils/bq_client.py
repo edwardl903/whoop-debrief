@@ -52,7 +52,9 @@ _SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("loaded_at", "TIMESTAMP", mode="REQUIRED"),
     ],
     "raw_sleeps": [
-        bigquery.SchemaField("id", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("cycle_id", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("v1_id", "INTEGER", mode="NULLABLE"),
         bigquery.SchemaField("user_id", "INTEGER", mode="REQUIRED"),
         bigquery.SchemaField("start", "TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField("end", "TIMESTAMP", mode="NULLABLE"),
@@ -100,7 +102,7 @@ _SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
     ],
     "raw_recoveries": [
         bigquery.SchemaField("cycle_id", "INTEGER", mode="REQUIRED"),
-        bigquery.SchemaField("sleep_id", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("sleep_id", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("user_id", "INTEGER", mode="REQUIRED"),
         bigquery.SchemaField("created_at", "TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField("updated_at", "TIMESTAMP", mode="NULLABLE"),
@@ -121,12 +123,14 @@ _SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("loaded_at", "TIMESTAMP", mode="REQUIRED"),
     ],
     "raw_workouts": [
-        bigquery.SchemaField("id", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("v1_id", "INTEGER", mode="NULLABLE"),
         bigquery.SchemaField("user_id", "INTEGER", mode="REQUIRED"),
         bigquery.SchemaField("start", "TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField("end", "TIMESTAMP", mode="NULLABLE"),
         bigquery.SchemaField("timezone_offset", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("sport_id", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("sport_name", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("score_state", "STRING", mode="NULLABLE"),
         bigquery.SchemaField(
             "score",
@@ -259,21 +263,44 @@ class BigQueryClient:
         table_id: str,
         rows: list[dict[str, Any]],
     ) -> int:
-        """Append rows to a table using the streaming insert API. Returns count inserted."""
+        """Append rows to a table using the streaming insert API. Returns count inserted.
+
+        Retries on NotFound errors, which can occur for ~30s after a table is
+        created or recreated due to BigQuery streaming buffer propagation delay.
+        """
+        import time
+        from google.api_core.exceptions import NotFound
+
         if not rows:
             logger.debug("No rows to insert", extra={"table": table_id})
             return 0
+
         ref = self._client.dataset(dataset_id).table(table_id)
-        errors = self._client.insert_rows_json(ref, rows)
-        if errors:
-            raise RuntimeError(
-                f"BigQuery streaming insert errors for {dataset_id}.{table_id}: {errors}"
-            )
-        logger.info(
-            "Rows inserted",
-            extra={"table": f"{dataset_id}.{table_id}", "count": len(rows)},
-        )
-        return len(rows)
+        full = f"{dataset_id}.{table_id}"
+        max_attempts = 6
+        backoff = 5  # seconds between retries
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                errors = self._client.insert_rows_json(ref, rows)
+                if errors:
+                    raise RuntimeError(
+                        f"BigQuery streaming insert errors for {full}: {errors}"
+                    )
+                logger.info(
+                    "Rows inserted",
+                    extra={"table": full, "count": len(rows)},
+                )
+                return len(rows)
+            except NotFound:
+                if attempt == max_attempts:
+                    raise
+                wait = backoff * attempt
+                logger.warning(
+                    "Table not yet available after creation; retrying",
+                    extra={"table": full, "attempt": attempt, "wait_sec": wait},
+                )
+                time.sleep(wait)
 
     def log_pipeline_run(self, run: dict[str, Any]) -> None:
         """Append a single run record to the pipeline_runs audit table."""

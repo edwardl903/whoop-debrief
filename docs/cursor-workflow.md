@@ -81,7 +81,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 
 | Date | Change |
 |------|--------|
-| 2026-07-07 | Privacy policy live at edward-lai.com/whoop-debrief/privacy; README and .env.example updated with WHOOP app setup values |
+| 2026-07-07 | Migrated WHOOP client to API v2 (v1 paths 404 for sleep/recovery/workout); fixed `_ALL_TABLES` KeyError |
 | 2026-07-07 | Project named **WHOOP Debrief**; README, portfolio-story, docs updated |
 | 2026-07-07 | Ingest layer implemented: utils/config.py, utils/logging_setup.py, utils/whoop_client.py, utils/bq_client.py, scripts/auth.py, scripts/fetch.py, tests/ (51 tests, 0 failures). docs/portfolio-story.md added. |
 | 2026-07-05 | Initial scaffold: folder structure, .gitignore, .env.example, requirements.txt, Makefile, README, GitHub Actions workflow, docs, Cursor rules |

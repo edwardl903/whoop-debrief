@@ -1,16 +1,23 @@
-.PHONY: auth fetch load dbt-run dbt-test all lint format test
+.PHONY: auth fetch load reset-tables dbt-run dbt-test all lint format test
+
+PYTHON ?= python
+export PYTHONPATH := .
 
 # OAuth flow — run once to get tokens
 auth:
-	python scripts/auth.py
+	$(PYTHON) scripts/auth.py
 
-# Fetch new data from WHOOP API
+# Fetch new data from WHOOP API (pass ARGS="--dry-run" to skip BigQuery writes)
 fetch:
-	python scripts/fetch.py
+	$(PYTHON) scripts/fetch.py $(ARGS)
 
 # Load raw data to BigQuery
 load:
-	python scripts/load.py
+	$(PYTHON) scripts/load.py
+
+# Drop and recreate all raw tables (use when schemas change)
+reset-tables:
+	$(PYTHON) scripts/reset_tables.py
 
 # dbt pipeline
 dbt-run:

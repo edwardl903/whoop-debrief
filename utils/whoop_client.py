@@ -1,4 +1,4 @@
-"""WHOOP API v1 client.
+"""WHOOP API v2 client.
 
 All API calls in the pipeline go through this module. Never construct
 requests sessions or call the WHOOP API inline elsewhere.
@@ -23,7 +23,7 @@ from utils.config import Config
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://api.prod.whoop.com/developer/v1"
+_BASE_URL = "https://api.prod.whoop.com/developer/v2"
 _TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
 _PAGE_LIMIT = 25
 _MAX_RETRIES = 3
@@ -45,7 +45,7 @@ class WhoopAPIError(Exception):
 
 
 class WhoopClient:
-    """WHOOP API v1 client. One instance per pipeline run."""
+    """WHOOP API v2 client. One instance per pipeline run."""
 
     def __init__(self, config: Config) -> None:
         self._config = config

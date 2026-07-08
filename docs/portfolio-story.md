@@ -150,7 +150,7 @@ Use one or two of these. Pick the ones that match the job description.
 
 ## Tech stack (for copy-paste into portfolio page)
 
-Python 3.13, WHOOP API v1, BigQuery, dbt (BigQuery adapter), GitHub Actions,
+Python 3.13, WHOOP API v2, BigQuery, dbt (BigQuery adapter), GitHub Actions,
 ruff, pytest, google-cloud-bigquery, requests
 
 ---

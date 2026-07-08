@@ -45,15 +45,15 @@ WHOOP API (OAuth 2.0)         BigQuery                  (planned)
 
 ---
 
-## Data sources (WHOOP API v1)
+## Data sources (WHOOP API v2)
 
 | Endpoint | What it returns | Raw table |
 |----------|----------------|-----------|
-| `GET /v1/cycle` | Daily strain cycle (start/end, strain score, calories, avg/max HR) | `raw_cycles` |
-| `GET /v1/sleep` | Sleep record (stages, efficiency, respiratory rate, duration) | `raw_sleeps` |
-| `GET /v1/recovery` | Recovery score (%, HRV, resting HR, SpO2, skin temp) | `raw_recoveries` |
-| `GET /v1/workout` | Workout (sport type, duration, strain, HR zones) | `raw_workouts` |
-| `GET /v1/user/profile/basic` | User profile (name, join date) | `raw_users` |
+| `GET /v2/cycle` | Daily strain cycle (start/end, strain score, calories, avg/max HR) | `raw_cycles` |
+| `GET /v2/activity/sleep` | Sleep record (stages, efficiency, respiratory rate, duration) | `raw_sleeps` |
+| `GET /v2/recovery` | Recovery score (%, HRV, resting HR, SpO2, skin temp) | `raw_recoveries` |
+| `GET /v2/activity/workout` | Workout (sport type, duration, strain, HR zones) | `raw_workouts` |
+| `GET /v2/user/profile/basic` | User profile (name, join date) | `raw_users` |
 
 All endpoints support `start` / `end` date params for incremental fetch.
 

@@ -42,8 +42,8 @@ _ENDPOINTS: dict[str, tuple[str, str, str]] = {
     "workouts": ("get_workouts", "raw_workouts", "end"),
 }
 
-# All tables managed by this script (raw data + audit log)
-_ALL_TABLES = list(_ENDPOINTS.keys()) + ["pipeline_runs"]
+# All BigQuery tables managed by this script (raw data + audit log)
+_ALL_TABLES = [table for _, table, _ in _ENDPOINTS.values()] + ["pipeline_runs"]
 
 
 # ---------------------------------------------------------------------------
@@ -75,6 +75,8 @@ def _flatten_sleep(r: dict[str, Any], loaded_at: str) -> dict[str, Any]:
     needed = score.get("sleep_needed") or {}
     return {
         "id": r.get("id"),
+        "cycle_id": r.get("cycle_id"),
+        "v1_id": r.get("v1_id"),
         "user_id": r.get("user_id"),
         "start": r.get("start"),
         "end": r.get("end"),
@@ -130,14 +132,16 @@ def _flatten_recovery(r: dict[str, Any], loaded_at: str) -> dict[str, Any]:
 
 def _flatten_workout(r: dict[str, Any], loaded_at: str) -> dict[str, Any]:
     score = r.get("score") or {}
-    zones = score.get("zone_duration") or {}
+    zones = score.get("zone_durations") or score.get("zone_duration") or {}
     return {
         "id": r.get("id"),
+        "v1_id": r.get("v1_id"),
         "user_id": r.get("user_id"),
         "start": r.get("start"),
         "end": r.get("end"),
         "timezone_offset": r.get("timezone_offset"),
         "sport_id": r.get("sport_id"),
+        "sport_name": r.get("sport_name"),
         "score_state": r.get("score_state"),
         "score": {
             "strain": score.get("strain"),

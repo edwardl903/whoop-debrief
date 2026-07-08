@@ -18,7 +18,7 @@ health data (recovery, sleep, strain, workouts) into BigQuery via Python + dbt.
 
 | Layer | Tool |
 |-------|------|
-| Source | WHOOP API v1 (OAuth 2.0) |
+| Source | WHOOP API v2 (OAuth 2.0) |
 | Ingest | Python 3.13, scripts/fetch.py |
 | Utils | utils/whoop_client.py (API), utils/bq_client.py (BigQuery) |
 | Warehouse | BigQuery — raw: `whoop_raw`, dbt: `whoop_dbt` |
