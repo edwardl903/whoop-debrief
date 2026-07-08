@@ -148,10 +148,14 @@ class TestTokenRefresh:
 
         assert client._refresh_token == original_refresh
 
-
-# ---------------------------------------------------------------------------
-# API errors
-# ---------------------------------------------------------------------------
+    def test_refresh_includes_scope_and_redirect_uri(self, client: WhoopClient) -> None:
+        refresh_resp = _ok_response({"access_token": "new_tok"})
+        with patch.object(client._session, "post", return_value=refresh_resp) as mock_post:
+            client._refresh_access_token()
+        _, kwargs = mock_post.call_args
+        data = kwargs["data"]
+        assert data["scope"] == "offline"
+        assert data["redirect_uri"] == "http://localhost:8080/callback"
 
 
 class TestApiErrors:

@@ -313,6 +313,12 @@ def main(argv: list[str] | None = None) -> int:
             "total_inserted": sum(r["rows_inserted"] for r in results),
         },
     )
+    if whoop.tokens_refreshed:
+        logger.warning(
+            "WHOOP tokens were refreshed during this run. "
+            "Update WHOOP_ACCESS_TOKEN and WHOOP_REFRESH_TOKEN in GitHub "
+            "secrets from your local .env before the next scheduled run."
+        )
     return 0
 
 

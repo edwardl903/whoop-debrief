@@ -98,7 +98,18 @@ Repo → **Settings → Secrets and variables → Actions**
 | `WHOOP_REFRESH_TOKEN` | From `.env` after `make auth` |
 | `GOOGLE_APPLICATION_CREDENTIALS_JSON` | Full service account JSON |
 
-`WHOOP_REDIRECT_URI` is **not** needed in Actions (only for local `make auth`).
+`WHOOP_REDIRECT_URI` is required for token refresh in Actions:
+
+| Secret | Value |
+|--------|-------|
+| `WHOOP_REDIRECT_URI` | `http://localhost:8080/callback` (must match WHOOP dashboard) |
+
+**Token rotation trap:** WHOOP invalidates the old refresh token after every refresh. If you run `make fetch` locally, sync tokens to GitHub before the next scheduled run:
+
+```bash
+chmod +x scripts/sync_github_secrets.sh
+./scripts/sync_github_secrets.sh
+```
 
 **Repository variables** (not secret — used by the dbt job):
 

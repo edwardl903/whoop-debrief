@@ -52,6 +52,7 @@ class WhoopClient:
         self._access_token = config.whoop_access_token
         self._refresh_token = config.whoop_refresh_token
         self._session = self._build_session()
+        self._tokens_refreshed = False
 
     # ------------------------------------------------------------------ setup
 
@@ -75,16 +76,17 @@ class WhoopClient:
 
     def _refresh_access_token(self) -> None:
         logger.info("Refreshing WHOOP access token")
+        redirect_uri = (
+            self._config.whoop_redirect_uri or "http://localhost:8080/callback"
+        )
         payload: dict[str, str] = {
             "grant_type": "refresh_token",
             "refresh_token": self._refresh_token,
             "client_id": self._config.whoop_client_id,
             "client_secret": self._config.whoop_client_secret,
+            "scope": "offline",
+            "redirect_uri": redirect_uri,
         }
-        # WHOOP requires redirect_uri on refresh requests even though it is
-        # not used — the value must match a URI registered in the developer dashboard.
-        redirect_uri = self._config.whoop_redirect_uri or "http://localhost:8080/callback"
-        payload["redirect_uri"] = redirect_uri
 
         resp = self._session.post(_TOKEN_URL, data=payload, timeout=30)
         if not resp.ok:
@@ -95,7 +97,13 @@ class WhoopClient:
         self._access_token = tokens["access_token"]
         # WHOOP may or may not return a new refresh token
         self._refresh_token = tokens.get("refresh_token", self._refresh_token)
+        self._tokens_refreshed = True
         logger.info("Access token refreshed successfully")
+
+    @property
+    def tokens_refreshed(self) -> bool:
+        """True if a token refresh happened during this client session."""
+        return self._tokens_refreshed
 
     # -------------------------------------------------------- low-level fetch
 
