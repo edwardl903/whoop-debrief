@@ -75,16 +75,18 @@ class WhoopClient:
 
     def _refresh_access_token(self) -> None:
         logger.info("Refreshing WHOOP access token")
-        resp = self._session.post(
-            _TOKEN_URL,
-            data={
-                "grant_type": "refresh_token",
-                "refresh_token": self._refresh_token,
-                "client_id": self._config.whoop_client_id,
-                "client_secret": self._config.whoop_client_secret,
-            },
-            timeout=30,
-        )
+        payload: dict[str, str] = {
+            "grant_type": "refresh_token",
+            "refresh_token": self._refresh_token,
+            "client_id": self._config.whoop_client_id,
+            "client_secret": self._config.whoop_client_secret,
+        }
+        # WHOOP requires redirect_uri on refresh requests even though it is
+        # not used — the value must match a URI registered in the developer dashboard.
+        redirect_uri = self._config.whoop_redirect_uri or "http://localhost:8080/callback"
+        payload["redirect_uri"] = redirect_uri
+
+        resp = self._session.post(_TOKEN_URL, data=payload, timeout=30)
         if not resp.ok:
             raise TokenRefreshError(
                 f"Token refresh failed ({resp.status_code}): {resp.text}"
