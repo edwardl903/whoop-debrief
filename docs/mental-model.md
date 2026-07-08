@@ -1,4 +1,4 @@
-# whoop-analytics — Mental Model
+# WHOOP Debrief — Mental Model
 
 > Read this when you need to re-orient. It describes the full pipeline, how the
 > pieces connect, and why decisions were made. Update it whenever the architecture

@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed (2026-07-07)
+
+- Project named **WHOOP Debrief** (tagline: "What did your body learn last night?"); branding updated in README, portfolio-story, docs, and Cursor rules. GitHub repo slug remains `whoop-analytics` until renamed.
+
 ### Added (2026-07-07 — ingest layer)
 
 - `utils/config.py` — frozen `Config` dataclass loaded from env vars; validates all required vars on startup with a clear error message

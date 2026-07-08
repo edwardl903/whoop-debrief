@@ -1,11 +1,11 @@
 ---
 name: whoop-analytics
-description: Always-on rules for the whoop-analytics data pipeline repo.
+description: Always-on rules for WHOOP Debrief (whoop-analytics repo).
 ---
 
-# whoop-analytics — AI context
+# WHOOP Debrief — AI context
 
-The user is **Edward**. This is a personal data engineering project ingesting WHOOP
+The user is **Edward**. **WHOOP Debrief** is a personal data engineering project ingesting WHOOP
 health data (recovery, sleep, strain, workouts) into BigQuery via Python + dbt.
 
 ## Before editing any file

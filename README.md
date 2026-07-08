@@ -1,6 +1,8 @@
-# whoop-analytics
+# WHOOP Debrief
 
-Personal WHOOP data engineering pipeline. Ingests daily recovery, sleep, strain, and workout data from the WHOOP API, lands raw responses in BigQuery, and transforms them into mart tables with dbt. Runs nightly via GitHub Actions.
+Personal WHOOP data engineering pipeline. Every morning at 06:00 UTC, it debriefs your sensor: recovery, sleep, strain, and workouts from the WHOOP API into BigQuery, then transforms them into mart tables with dbt.
+
+*Repo: `whoop-analytics` (rename to `whoop-debrief` on GitHub when ready)*
 
 ---
 
@@ -60,7 +62,15 @@ cp .env.example .env
 
 ### 3. WHOOP OAuth (one-time)
 
-Register an app at [developer.whoop.com](https://developer.whoop.com/), get client credentials, then:
+Register an app at [developer.whoop.com](https://developer.whoop.com/) with:
+
+| Field | Value |
+|-------|-------|
+| Privacy Policy | https://www.edward-lai.com/whoop-debrief/privacy |
+| Redirect URL | `http://localhost:8080/callback` (must match `WHOOP_REDIRECT_URI` in `.env`) |
+| Scopes | `offline`, `read:recovery`, `read:cycles`, `read:sleep`, `read:workout`, `read:profile` |
+
+Copy Client ID and Client Secret into `.env`, then:
 
 ```bash
 make auth
@@ -116,8 +126,8 @@ make dbt-run    # transform only
 
 ## What's next
 
-- [ ] OAuth token refresh logic in `scripts/auth.py`
-- [ ] Incremental fetch (high-water mark per endpoint from BigQuery)
+- [x] OAuth token refresh in `utils/whoop_client.py`
+- [x] Incremental fetch (high-water mark per endpoint from BigQuery)
 - [ ] dbt staging models for all four raw tables
 - [ ] `int_daily_metrics` joining cycle + recovery + sleep
 - [ ] `fct_daily` incremental mart

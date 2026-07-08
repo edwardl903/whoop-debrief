@@ -1,4 +1,4 @@
-# Portfolio Story — whoop-analytics
+# Portfolio Story — WHOOP Debrief
 
 > Reference this file when writing resume bullets, cover letters, portfolio copy,
 > or answering "tell me about a project" in an interview. Keep it updated as the
@@ -6,11 +6,25 @@
 
 ---
 
+## Project identity
+
+| Field | Value |
+|-------|-------|
+| **Name** | WHOOP Debrief |
+| **Tagline** | What did your body learn last night? |
+| **GitHub repo** | `whoop-analytics` today; rename to `whoop-debrief` when ready |
+| **Privacy policy** | https://www.edward-lai.com/whoop-debrief/privacy |
+| **OAuth redirect (local)** | `http://localhost:8080/callback` |
+
+**Why "Debrief":** Athletes and analysts debrief after the fact. This pipeline runs at 06:00 UTC, reads overnight recovery and sleep, and turns raw API responses into structured data you can query. It is methodical, scheduled, and runs whether you open the app or not.
+
+---
+
 ## The one-sentence pitch
 
-End-to-end personal health data pipeline: WHOOP API (OAuth 2.0) to BigQuery,
-transformed with dbt, orchestrated nightly on GitHub Actions, with a Streamlit
-dashboard for trend visualization.
+WHOOP Debrief is an end-to-end personal health pipeline: WHOOP API (OAuth 2.0) to
+BigQuery, transformed with dbt, orchestrated nightly on GitHub Actions, with a
+Streamlit dashboard for trend visualization (planned).
 
 ---
 
@@ -70,8 +84,8 @@ Use one or two of these. Pick the ones that match the job description.
 
 **Short bullet (use when space is tight):**
 
-- Personal WHOOP analytics pipeline: Python ingest (OAuth 2.0, incremental),
-  BigQuery raw layer, dbt medallion transforms, GitHub Actions orchestration.
+- **WHOOP Debrief** — personal health pipeline: Python ingest (OAuth 2.0,
+  incremental), BigQuery raw layer, dbt medallion transforms, GitHub Actions.
 
 ---
 
@@ -150,4 +164,4 @@ ruff, pytest, google-cloud-bigquery, requests
 
 ---
 
-*Last updated: 2026-07-07*
+*Last updated: 2026-07-07 — project named WHOOP Debrief*
