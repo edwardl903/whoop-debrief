@@ -82,7 +82,33 @@ make auth
 Either drop your service account JSON at `gcp/service_account.json`, or set
 `GOOGLE_APPLICATION_CREDENTIALS_JSON` in `.env` as a single-line JSON string.
 
-### 5. Run the pipeline
+Set `BQ_PROJECT` in `.env` to your GCP project ID (or it is read from the service account JSON).
+
+### 5. GitHub Actions secrets and variables
+
+Repo → **Settings → Secrets and variables → Actions**
+
+**Repository secrets** (sensitive):
+
+| Secret | Value |
+|--------|-------|
+| `WHOOP_CLIENT_ID` | WHOOP developer dashboard |
+| `WHOOP_CLIENT_SECRET` | WHOOP developer dashboard |
+| `WHOOP_ACCESS_TOKEN` | From `.env` after `make auth` |
+| `WHOOP_REFRESH_TOKEN` | From `.env` after `make auth` |
+| `GOOGLE_APPLICATION_CREDENTIALS_JSON` | Full service account JSON |
+
+`WHOOP_REDIRECT_URI` is **not** needed in Actions (only for local `make auth`).
+
+**Repository variables** (not secret — used by the dbt job):
+
+| Variable | Value |
+|----------|-------|
+| `BQ_PROJECT` | Your GCP project ID, e.g. `my-whoop-project-123` |
+
+The ingest job can also read `project_id` from the service account JSON if `BQ_PROJECT` is unset, but the dbt job still needs the variable.
+
+### 6. Run the pipeline
 
 ```bash
 make all        # fetch → dbt seed → dbt snapshot → dbt run → dbt test
