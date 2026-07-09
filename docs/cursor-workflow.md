@@ -58,7 +58,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 | Pipeline schedule | GitHub Actions, 06:00 UTC daily |
 | Auth | WHOOP OAuth 2.0; tokens in `.env` (gitignored) |
 | Python version | 3.13 |
-| Status | Ingest layer complete — dbt models implemented |
+| Status | WHOOP + Strava ingest complete — dbt models implemented |
 
 ---
 
@@ -81,6 +81,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 
 | Date | Change |
 |------|--------|
+| 2026-07-09 | Strava integration: utils/strava_client.py, scripts/fetch_strava.py, stg_strava_runs, int_run_recovery, fct_runs; 81 tests pass |
 | 2026-07-09 | dbt layer complete: 4 staging models, int_daily_metrics, fct_daily (incremental), dim_user, my_trends + full schema.yml tests + sources.yml freshness |
 | 2026-07-07 | Migrated WHOOP client to API v2 (v1 paths 404 for sleep/recovery/workout); fixed `_ALL_TABLES` KeyError |
 | 2026-07-07 | Project named **WHOOP Debrief**; README, portfolio-story, docs updated |

@@ -67,6 +67,39 @@ models:
       - name: dbt_updated_at
         description: Timestamp of the last dbt run.
 
+  - name: fct_runs
+    description: >
+      Incremental fact table with one row per Strava run. Merges on run_id;
+      re-scans last 7 days to pick up late WHOOP scores or Strava edits.
+      Contains all run metrics plus same-day WHOOP strain context and
+      next-day WHOOP recovery impact.
+    columns:
+      - name: run_id
+        description: Strava run ID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: run_date
+        description: Calendar date of the run.
+        tests:
+          - not_null
+      - name: distance_km
+        description: Run distance in kilometers.
+      - name: pace_min_per_km
+        description: Average pace in minutes per km (lower = faster).
+      - name: same_day_strain
+        description: WHOOP day strain on the run day.
+      - name: same_day_recovery_bucket
+        description: "'peak', 'optimal', or 'poor' on the run day."
+      - name: next_day_recovery
+        description: WHOOP recovery score the morning after the run.
+      - name: next_day_recovery_bucket
+        description: "'peak', 'optimal', or 'poor' the morning after."
+      - name: recovery_delta
+        description: next_day_recovery minus same_day_recovery.
+      - name: dbt_updated_at
+        description: Timestamp of the last dbt run that touched this row.
+
   - name: my_trends
     description: >
       Full rebuild on every run. One row per (cycle_date, user_id). Provides

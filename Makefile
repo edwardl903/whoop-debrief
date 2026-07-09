@@ -1,17 +1,27 @@
-.PHONY: auth fetch reset-tables dbt-run dbt-test all lint format test
+.PHONY: auth strava-auth fetch fetch-strava fetch-all reset-tables dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
 
 PYTHON ?= python3.13
 export PYTHONPATH := .
 
 DBT = scripts/dbt_with_env.sh
 
-# OAuth flow — run once to get tokens
+# OAuth flow — run once per service to get tokens
 auth:
-	$(PYTHON) scripts/auth.py
+	$(PYTHON) scripts/auth.py --service whoop
+
+strava-auth:
+	$(PYTHON) scripts/auth.py --service strava
 
 # Fetch new data from WHOOP API (pass ARGS="--dry-run" to skip BigQuery writes)
 fetch:
 	$(PYTHON) scripts/fetch.py $(ARGS)
+
+# Fetch new Strava runs (skips gracefully if STRAVA_* credentials not set)
+fetch-strava:
+	$(PYTHON) scripts/fetch_strava.py $(ARGS)
+
+# Fetch both sources
+fetch-all: fetch fetch-strava
 
 # Drop and recreate all raw tables (use when schemas change)
 reset-tables:

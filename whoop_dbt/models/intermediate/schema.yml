@@ -39,3 +39,41 @@ models:
         description: "Categorical sleep label: 'excellent' (>=85), 'good' (70-84), 'fair' (50-69), 'poor' (<50)."
       - name: loaded_at
         description: Pipeline insertion timestamp (from raw_cycles, used as watermark).
+
+  - name: int_run_recovery
+    description: >
+      One row per Strava run. Joins each run to WHOOP daily metrics for
+      the same day (strain context) and the next day (recovery impact).
+      Both joins are left joins: runs without WHOOP data still appear.
+      Key analytical question answered: "did my recovery go up or down
+      after this run?" via the recovery_delta derived column.
+    columns:
+      - name: run_id
+        description: Strava run ID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: run_date
+        description: Calendar date of the run.
+        tests:
+          - not_null
+      - name: distance_km
+        description: Run distance in kilometers.
+      - name: moving_time_min
+        description: Moving time in minutes.
+      - name: pace_min_per_km
+        description: Average pace in minutes per km.
+      - name: same_day_strain
+        description: WHOOP day strain on the run day (null if no WHOOP data).
+      - name: same_day_recovery
+        description: WHOOP recovery score on the run day.
+      - name: same_day_recovery_bucket
+        description: "'peak', 'optimal', or 'poor' on the run day."
+      - name: next_day_recovery
+        description: WHOOP recovery score the morning after the run.
+      - name: next_day_recovery_bucket
+        description: "'peak', 'optimal', or 'poor' the morning after."
+      - name: recovery_delta
+        description: >
+          next_day_recovery minus same_day_recovery. Positive = recovery improved
+          after the run; negative = recovery declined. Null if either day lacks data.

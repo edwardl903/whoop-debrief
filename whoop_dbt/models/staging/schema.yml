@@ -160,3 +160,47 @@ models:
         description: Time in HR zone 5 (max effort, > 90% max HR) in minutes.
       - name: loaded_at
         description: Pipeline insertion timestamp (watermark column).
+
+  - name: stg_strava_runs
+    description: >
+      Deduplicated Strava run records. Derived columns: distance_km,
+      moving_time_min, pace_min_per_km (lower = faster), avg_speed_kmh.
+      Grain: one row per run_id (most recently loaded version).
+    columns:
+      - name: run_id
+        description: Strava activity ID (integer, primary key).
+        tests:
+          - not_null
+          - unique
+      - name: run_name
+        description: Run title as entered in Strava.
+      - name: sport_type
+        description: "'Run', 'TrailRun', or 'VirtualRun'."
+      - name: run_start
+        description: Run start timestamp (UTC).
+      - name: run_date
+        description: Calendar date of the run start (UTC).
+        tests:
+          - not_null
+      - name: distance_km
+        description: Total distance in kilometers.
+      - name: moving_time_min
+        description: Moving time in minutes.
+      - name: pace_min_per_km
+        description: Average pace in minutes per kilometer (lower = faster).
+      - name: avg_speed_kmh
+        description: Average speed in km/h.
+      - name: max_speed_kmh
+        description: Maximum speed in km/h.
+      - name: total_elevation_gain_meter
+        description: Total elevation gain in meters.
+      - name: average_heartrate
+        description: Average heart rate in bpm (null if no HR sensor).
+      - name: max_heartrate
+        description: Maximum heart rate in bpm.
+      - name: average_cadence
+        description: Average cadence in steps/min (null if no sensor).
+      - name: suffer_score
+        description: Strava suffer score (relative effort).
+      - name: loaded_at
+        description: Pipeline insertion timestamp (watermark column).

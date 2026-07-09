@@ -30,6 +30,12 @@ class Config:
     whoop_access_token: str
     whoop_refresh_token: str
 
+    # Strava OAuth 2.0 — all optional; WHOOP pipeline runs if these are absent.
+    strava_client_id: str | None
+    strava_client_secret: str | None
+    strava_access_token: str | None
+    strava_refresh_token: str | None
+
     # BigQuery
     bq_project: str
     bq_dataset_raw: str
@@ -41,6 +47,16 @@ class Config:
     # google_credentials_path: path to SA JSON file (local dev).
     google_credentials_json: str | None
     google_credentials_path: str | None
+
+    @property
+    def strava_configured(self) -> bool:
+        """True when all four Strava credentials are present."""
+        return all([
+            self.strava_client_id,
+            self.strava_client_secret,
+            self.strava_access_token,
+            self.strava_refresh_token,
+        ])
 
 
 def _resolve_bq_project(creds_json: str | None) -> str | None:
@@ -86,6 +102,10 @@ def load_config() -> Config:
         whoop_redirect_uri=os.getenv("WHOOP_REDIRECT_URI"),
         whoop_access_token=os.environ["WHOOP_ACCESS_TOKEN"],
         whoop_refresh_token=os.environ["WHOOP_REFRESH_TOKEN"],
+        strava_client_id=os.getenv("STRAVA_CLIENT_ID") or None,
+        strava_client_secret=os.getenv("STRAVA_CLIENT_SECRET") or None,
+        strava_access_token=os.getenv("STRAVA_ACCESS_TOKEN") or None,
+        strava_refresh_token=os.getenv("STRAVA_REFRESH_TOKEN") or None,
         bq_project=bq_project,
         bq_dataset_raw=os.getenv("BQ_DATASET_RAW", "whoop_raw"),
         bq_dataset_dbt=os.getenv("BQ_DATASET_DBT", "whoop_dbt"),

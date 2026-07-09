@@ -1,15 +1,18 @@
-"""One-time OAuth 2.0 authorization code flow for WHOOP API.
+"""One-time OAuth 2.0 authorization code flow for WHOOP and Strava APIs.
 
 Run once locally to obtain access and refresh tokens, which are then
 saved to .env. GitHub Actions uses the stored tokens; they refresh
-automatically mid-run via WhoopClient.
+automatically mid-run via WhoopClient / StravaClient.
 
 Usage:
-    make auth
-    python3.13 scripts/auth.py
+    make auth             # WHOOP (default)
+    make strava-auth      # Strava
+    python3.13 scripts/auth.py --service whoop
+    python3.13 scripts/auth.py --service strava
 """
 from __future__ import annotations
 
+import argparse
 import os
 import secrets
 import string
@@ -21,11 +24,21 @@ from urllib.parse import parse_qs, urlencode, urlparse
 import requests
 from dotenv import load_dotenv, set_key
 
-_AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
-_TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
-_SCOPES = (
-    "offline read:recovery read:cycles read:sleep read:workout read:profile"
-)
+# WHOOP OAuth endpoints
+_WHOOP_AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
+_WHOOP_TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
+_WHOOP_SCOPES = "offline read:recovery read:cycles read:sleep read:workout read:profile"
+
+# Strava OAuth endpoints
+_STRAVA_AUTH_URL = "https://www.strava.com/oauth/authorize"
+_STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"
+_STRAVA_SCOPES = "activity:read_all"
+
+# Keep backward-compatible aliases (WHOOP defaults)
+_AUTH_URL = _WHOOP_AUTH_URL
+_TOKEN_URL = _WHOOP_TOKEN_URL
+_SCOPES = _WHOOP_SCOPES
+
 _CALLBACK_TIMEOUT_SEC = 120
 _STATE_CHARS = string.ascii_letters + string.digits
 
@@ -96,13 +109,18 @@ def _capture_code(port: int, timeout_sec: int = _CALLBACK_TIMEOUT_SEC) -> str | 
     return _auth_code["value"]
 
 
-def main() -> None:
-    load_dotenv()
-
-    client_id = os.environ["WHOOP_CLIENT_ID"]
-    client_secret = os.environ["WHOOP_CLIENT_SECRET"]
-    redirect_uri = os.getenv("WHOOP_REDIRECT_URI", "http://localhost:8080/callback")
-
+def _run_oauth_flow(
+    service: str,
+    auth_url: str,
+    token_url: str,
+    scope: str,
+    client_id: str,
+    client_secret: str,
+    redirect_uri: str,
+    token_env_keys: dict[str, str],
+    extra_token_params: dict[str, str] | None = None,
+) -> None:
+    """Generic OAuth 2.0 authorization code flow. Shared by WHOOP and Strava."""
     parsed = urlparse(redirect_uri)
     port = parsed.port or 8080
 
@@ -114,26 +132,26 @@ def main() -> None:
             "client_id": client_id,
             "redirect_uri": redirect_uri,
             "response_type": "code",
-            "scope": _SCOPES,
+            "scope": scope,
             "state": state,
         }
     )
-    auth_url = f"{_AUTH_URL}?{auth_params}"
+    full_auth_url = f"{auth_url}?{auth_params}"
 
     print(f"Listening on port {port} for the OAuth callback...")
-    print(f"Opening WHOOP authorization page...\n{auth_url}\n")
-    webbrowser.open(auth_url)
+    print(f"Opening {service} authorization page...\n{full_auth_url}\n")
+    webbrowser.open(full_auth_url)
 
     code = _capture_code(port)
 
     if _auth_error["value"]:
         print(f"\nAuthorization failed: {_auth_error['value']}")
-        print("Close any old WHOOP login tabs and run `make auth` again.")
+        print(f"Close any old {service} login tabs and run the auth command again.")
         return
 
     if not code:
         print(
-            "\nNo code received automatically. After approving in WHOOP, your browser "
+            f"\nNo code received automatically. After approving in {service}, your browser "
             "redirects to a localhost URL that may not load. That is fine."
         )
         pasted = input(
@@ -144,7 +162,7 @@ def main() -> None:
             print(f"Authorization failed: {pasted_error}")
             return
         if pasted_state != state:
-            print("State mismatch. Run `make auth` again and use the new browser tab.")
+            print("State mismatch. Run the auth command again and use the new browser tab.")
             return
         code = pasted_code
 
@@ -153,30 +171,89 @@ def main() -> None:
         return
 
     print("Code received. Exchanging for tokens...")
-    resp = requests.post(
-        _TOKEN_URL,
-        data={
-            "grant_type": "authorization_code",
-            "code": code,
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "redirect_uri": redirect_uri,
-        },
-        timeout=30,
-    )
+    payload: dict[str, str] = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+    }
+    if extra_token_params:
+        payload.update(extra_token_params)
+
+    resp = requests.post(token_url, data=payload, timeout=30)
     if not resp.ok:
         print(f"Token exchange failed ({resp.status_code}): {resp.text}")
         return
 
     tokens = resp.json()
-
     env_path = ".env"
-    set_key(env_path, "WHOOP_ACCESS_TOKEN", tokens["access_token"])
-    set_key(env_path, "WHOOP_REFRESH_TOKEN", tokens["refresh_token"])
+
+    for env_key, token_key in token_env_keys.items():
+        value = tokens.get(token_key)
+        if value:
+            set_key(env_path, env_key, str(value))
 
     expires_in = tokens.get("expires_in", "unknown")
     print(f"Tokens saved to {env_path} (expires_in: {expires_in}s)")
-    print("Run 'make fetch' to test the pipeline.")
+
+
+def main() -> None:
+    load_dotenv()
+
+    parser = argparse.ArgumentParser(
+        description="One-time OAuth flow for WHOOP or Strava."
+    )
+    parser.add_argument(
+        "--service",
+        choices=["whoop", "strava"],
+        default="whoop",
+        help="Which service to authenticate. Default: whoop.",
+    )
+    args = parser.parse_args()
+
+    redirect_uri = os.getenv("WHOOP_REDIRECT_URI", "http://localhost:8080/callback")
+
+    if args.service == "strava":
+        client_id = os.environ.get("STRAVA_CLIENT_ID")
+        client_secret = os.environ.get("STRAVA_CLIENT_SECRET")
+        if not client_id or not client_secret:
+            print(
+                "STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET must be set in .env "
+                "before running Strava auth."
+            )
+            return
+        _run_oauth_flow(
+            service="Strava",
+            auth_url=_STRAVA_AUTH_URL,
+            token_url=_STRAVA_TOKEN_URL,
+            scope=_STRAVA_SCOPES,
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+            token_env_keys={
+                "STRAVA_ACCESS_TOKEN": "access_token",
+                "STRAVA_REFRESH_TOKEN": "refresh_token",
+            },
+        )
+        print("Run 'make fetch-strava' to test the Strava pipeline.")
+    else:
+        client_id = os.environ["WHOOP_CLIENT_ID"]
+        client_secret = os.environ["WHOOP_CLIENT_SECRET"]
+        _run_oauth_flow(
+            service="WHOOP",
+            auth_url=_WHOOP_AUTH_URL,
+            token_url=_WHOOP_TOKEN_URL,
+            scope=_WHOOP_SCOPES,
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+            token_env_keys={
+                "WHOOP_ACCESS_TOKEN": "access_token",
+                "WHOOP_REFRESH_TOKEN": "refresh_token",
+            },
+        )
+        print("Run 'make fetch' to test the WHOOP pipeline.")
 
 
 if __name__ == "__main__":

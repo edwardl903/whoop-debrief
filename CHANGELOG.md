@@ -7,6 +7,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added (2026-07-09 — Strava integration)
+
+- `utils/strava_client.py` — Strava API v3 client: OAuth 2.0 Bearer auth, page-based pagination (`page` + `per_page`), exponential backoff retry, token refresh on 401; `get_runs(after)` filters to Run/TrailRun/VirtualRun client-side; `TokenRefreshError` and `StravaAPIError` for typed error handling
+- `scripts/fetch_strava.py` — mirrors `fetch.py` structure: `_flatten_run`, `ingest_endpoint`, `main` with `--dry-run` / `--endpoint`; exits 0 gracefully when `config.strava_configured == False`
+- `whoop_dbt/models/staging/stg_strava_runs.sql` — casts, renames, computes `distance_km`, `moving_time_min`, `pace_min_per_km` (via `SAFE_DIVIDE`), `avg_speed_kmh`; dedups by `run_id`
+- `whoop_dbt/models/intermediate/int_run_recovery.sql` — joins each run to `int_daily_metrics` twice: same-day (strain context) and next-day (`date_add(run_date, interval 1 day)` for recovery impact); derives `recovery_delta` = next_day_recovery minus same_day_recovery
+- `whoop_dbt/models/marts/fct_runs.sql` — incremental merge on `run_id`, 7-day rescan window; all run metrics plus WHOOP context columns
+- `tests/test_strava_client.py`, `tests/test_fetch_strava.py` — 29 unit tests: pagination, sport-type filter, token refresh, dry-run, unconfigured-skip behavior; all 81 total tests pass
+- `scripts/auth.py` — refactored to support `--service whoop` (default) and `--service strava`; common `_run_oauth_flow` helper eliminates duplication
+- `Makefile` — added `strava-auth`, `fetch-strava`, `fetch-all` targets
+- `.env.example` — added `STRAVA_*` vars with setup notes
+- `.github/workflows/pipeline.yml` — added "Run Strava fetch" step to ingest job; passes `STRAVA_*` secrets; step is a no-op when secrets are absent
+
 ### Added (2026-07-09 — dbt layer)
 
 - `whoop_dbt/dbt_project.yml` — project config with per-layer materialization (staging: view, intermediate: table, marts: table)

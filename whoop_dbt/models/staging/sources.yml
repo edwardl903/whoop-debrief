@@ -97,3 +97,44 @@ sources:
               and zone_duration (HR zones 0-5 in milliseconds).
           - name: loaded_at
             description: Timestamp when the row was inserted by the pipeline.
+
+      - name: raw_strava_runs
+        description: >
+          One row per Strava run (sport_type in Run / TrailRun / VirtualRun).
+          Written by scripts/fetch_strava.py. Flat schema with no nested STRUCTs.
+          Freshness checked separately; pipeline skips this table if Strava is
+          not configured.
+        freshness:
+          warn_after: {count: 49, period: hour}
+          error_after: {count: 97, period: hour}
+        columns:
+          - name: id
+            description: Strava activity ID (integer).
+          - name: name
+            description: Run title as entered in Strava.
+          - name: sport_type
+            description: "'Run', 'TrailRun', or 'VirtualRun'."
+          - name: start_date
+            description: Run start timestamp (UTC).
+          - name: distance_meter
+            description: Total distance in meters.
+          - name: moving_time_sec
+            description: Moving time in seconds (excludes stopped time).
+          - name: elapsed_time_sec
+            description: Wall-clock elapsed time in seconds.
+          - name: total_elevation_gain_meter
+            description: Total elevation gain in meters.
+          - name: average_speed_ms
+            description: Average speed in meters per second.
+          - name: max_speed_ms
+            description: Maximum speed in meters per second.
+          - name: average_heartrate
+            description: Average heart rate in bpm (null if no HR sensor).
+          - name: max_heartrate
+            description: Maximum heart rate in bpm.
+          - name: average_cadence
+            description: Average cadence in steps/min (null if no sensor).
+          - name: suffer_score
+            description: Strava suffer score (relative effort).
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.

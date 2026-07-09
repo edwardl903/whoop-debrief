@@ -57,41 +57,52 @@ WHOOP API (OAuth 2.0)         BigQuery                  (planned)
 
 All endpoints support `start` / `end` date params for incremental fetch.
 
+## Data sources (Strava API v3)
+
+| Endpoint | What it returns | Raw table |
+|----------|----------------|-----------|
+| `GET /v3/athlete/activities` | All activities; filtered client-side to Run/TrailRun/VirtualRun | `raw_strava_runs` |
+
+Strava uses page-based pagination (`?after=<epoch>&page=N&per_page=50`).
+Strava credentials are optional — the WHOOP pipeline runs even if `STRAVA_*` env vars are absent.
+
 ---
 
 ## dbt model lineage
 
 ```
-SOURCE
-whoop_raw.raw_cycles
-whoop_raw.raw_sleeps
-whoop_raw.raw_recoveries
-whoop_raw.raw_workouts
-        │
-        ▼  STAGING  (views — cast, rename, dedup)
-stg_raw_cycles
-stg_raw_sleeps
-stg_raw_recoveries
+SOURCE (WHOOP)                   SOURCE (Strava)
+whoop_raw.raw_cycles             whoop_raw.raw_strava_runs
+whoop_raw.raw_sleeps                     │
+whoop_raw.raw_recoveries                 │
+whoop_raw.raw_workouts                   │
+        │                                │
+        ▼  STAGING (views)               ▼  STAGING (view)
+stg_raw_cycles               stg_strava_runs
+stg_raw_sleeps                 pace, distance_km,
+stg_raw_recoveries             speed conversions
 stg_raw_workouts
+        │                                │
+        ▼  INTERMEDIATE (table)          │
+int_daily_metrics  ◄─────────────────────┤
+  cycle + recovery + sleep               │
+  recovery_bucket + sleep_quality_label  │
+        │                                │
+        │              ◄─── int_run_recovery (table)
+        │                    run + same-day WHOOP
+        │                    + next-day recovery
+        │                    recovery_delta derived
         │
-        ▼  INTERMEDIATE  (table — join and derive)
-int_daily_metrics
-  - joins cycle + recovery + sleep on date
-  - derives: recovery_bucket (peak/optimal/good/poor), sleep_quality label
-  - grain: one row per date
-        │
-        ├────────────────────────────────────────┐
-        ▼                                        ▼
-MARTS  (incremental merge)                DIMENSION
-fct_daily                                 dim_user
-  grain: date                               1 row per user
-  all metrics in one place                  current + peak scores
-  watermark: loaded_at                      join date, streak data
-        │
+        ├────────────────┬──────────────────────┐
+        ▼                ▼                      ▼
+MARTS (incremental)  DIMENSION (full)      MART (incremental)
+fct_daily            dim_user              fct_runs
+  grain: date          1 row/user            grain: run_id
+        │             averages+peaks
         ▼
-my_trends  (table, full rebuild)
-  pre-aggregated rolling averages
-  consumed by serve layer
+my_trends (full rebuild)
+  7d/28d rolling averages
+  day-over-day deltas
 ```
 
 ---
@@ -109,7 +120,11 @@ my_trends  (table, full rebuild)
 | BigQuery | `whoop_dbt.fct_daily` | dbt | serve layer |
 | BigQuery | `whoop_dbt.dim_user` | dbt | serve layer |
 | BigQuery | `whoop_dbt.my_trends` | dbt | serve layer |
-| BigQuery | `whoop_raw.pipeline_runs` | scripts/fetch.py | audit log |
+| BigQuery | `whoop_raw.raw_strava_runs` | scripts/fetch_strava.py | dbt staging |
+| BigQuery | `whoop_dbt.stg_strava_runs` | dbt | dbt intermediate |
+| BigQuery | `whoop_dbt.int_run_recovery` | dbt | dbt marts |
+| BigQuery | `whoop_dbt.fct_runs` | dbt | serve layer |
+| BigQuery | `whoop_raw.pipeline_runs` | scripts/fetch.py, fetch_strava.py | audit log |
 
 ---
 
@@ -121,6 +136,10 @@ my_trends  (table, full rebuild)
 | `WHOOP_CLIENT_SECRET` | scripts/auth.py, utils/whoop_client.py | WHOOP app credentials |
 | `WHOOP_ACCESS_TOKEN` | utils/whoop_client.py | Written after OAuth; rotate via refresh |
 | `WHOOP_REFRESH_TOKEN` | utils/whoop_client.py | Used to get new access token |
+| `STRAVA_CLIENT_ID` | scripts/auth.py, utils/strava_client.py | Optional; Strava app credentials |
+| `STRAVA_CLIENT_SECRET` | scripts/auth.py, utils/strava_client.py | Optional |
+| `STRAVA_ACCESS_TOKEN` | utils/strava_client.py | Written by `make strava-auth` |
+| `STRAVA_REFRESH_TOKEN` | utils/strava_client.py | Static; does not rotate |
 | `GOOGLE_APPLICATION_CREDENTIALS_JSON` | utils/bq_client.py | Full SA JSON (GitHub Actions) |
 | `GOOGLE_APPLICATION_CREDENTIALS` | utils/bq_client.py | Path to SA file (local dev) |
 | `BQ_PROJECT` | utils/bq_client.py, utils/config.py | GCP project ID |
@@ -167,6 +186,7 @@ my_trends  (table, full rebuild)
 
 | Issue | Resolved | Notes |
 |-------|----------|-------|
+| Strava integration not built | 2026-07-09 | utils/strava_client.py, fetch_strava.py, stg_strava_runs, int_run_recovery, fct_runs |
 | dbt staging models not written | 2026-07-09 | All 4 stg_* models + int_daily_metrics + fct_daily + dim_user + my_trends |
 | dbt source freshness tests | 2026-07-09 | warn_after 25h / error_after 49h in sources.yml |
 | OAuth token refresh not implemented | 2026-07-07 | Implemented in utils/whoop_client.py — auto-refreshes on 401 |
@@ -183,4 +203,4 @@ my_trends  (table, full rebuild)
 
 ---
 
-*Last updated: 2026-07-09 — dbt layer implemented*
+*Last updated: 2026-07-09 — Strava integration added*
