@@ -1,0 +1,101 @@
+name: dbt Docs → GitHub Pages
+
+# Regenerate and publish the dbt docs site after every successful main branch push.
+# The site is deployed to: https://edwardl903.github.io/whoop-analytics/
+# (update the URL if the repo is renamed to whoop-debrief)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Only re-deploy when dbt models, sources, or schema docs change
+      - "whoop_dbt/**"
+      - "requirements.txt"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; cancel in-progress if a newer push arrives.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Generate dbt docs + deploy to Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      BQ_PROJECT: ${{ vars.BQ_PROJECT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write dbt profiles.yml + service account key
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, json, pathlib
+          raw = os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"].strip()
+          info = json.loads(raw)
+          pathlib.Path("/tmp/sa.json").write_text(json.dumps(info))
+          print(f"Wrote service account for project: {info.get('project_id')}")
+          PYEOF
+          cat > whoop_dbt/profiles.yml << 'EOF'
+          whoop_dbt:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: service-account
+                project: ${{ vars.BQ_PROJECT }}
+                dataset: whoop_dbt
+                keyfile: /tmp/sa.json
+                location: us-central1
+                priority: interactive
+                threads: 4
+                timeout_seconds: 300
+          EOF
+
+      - name: dbt deps
+        working-directory: whoop_dbt
+        run: dbt deps
+
+      - name: dbt docs generate
+        working-directory: whoop_dbt
+        run: dbt docs generate
+
+      # dbt produces target/index.html, target/manifest.json, target/catalog.json.
+      # GitHub Pages needs a flat directory; copy the target files out.
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp whoop_dbt/target/index.html _site/
+          cp whoop_dbt/target/manifest.json _site/
+          cp whoop_dbt/target/catalog.json _site/
+          cp whoop_dbt/target/run_results.json _site/ 2>/dev/null || true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

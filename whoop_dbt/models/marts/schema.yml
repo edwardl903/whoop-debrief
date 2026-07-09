@@ -95,6 +95,13 @@ models:
         description: WHOOP recovery score the morning after the run.
       - name: next_day_recovery_bucket
         description: "'peak', 'optimal', or 'poor' the morning after."
+      - name: suffer_score
+        description: Strava suffer score (relative effort).
+      - name: summary_polyline
+        description: >
+          Encoded Google Polyline for the GPS route. Decode with polyline.decode()
+          to get lat/lng pairs. Null for indoor runs. Use scripts/generate_route_maps.py
+          to render HTML maps from this column.
       - name: recovery_delta
         description: next_day_recovery minus same_day_recovery.
       - name: dbt_updated_at

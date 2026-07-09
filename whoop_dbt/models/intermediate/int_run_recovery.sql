@@ -64,6 +64,7 @@ select
     r.max_heartrate                                         as run_max_hr,
     r.average_cadence,
     r.suffer_score,
+    r.summary_polyline,
 
     -- WHOOP context for run day
     sd.same_day_cycle_id,

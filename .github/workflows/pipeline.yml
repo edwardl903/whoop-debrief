@@ -129,6 +129,13 @@ jobs:
         working-directory: whoop_dbt
         run: dbt test
 
+      - name: dbt source freshness
+        working-directory: whoop_dbt
+        # Warn loudly but don't block the pipeline; Strava freshness can lag if
+        # no new runs have been logged within the warn window.
+        continue-on-error: true
+        run: dbt source freshness
+
       - name: Upload dbt artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -137,4 +144,5 @@ jobs:
           path: |
             whoop_dbt/target/manifest.json
             whoop_dbt/target/run_results.json
+            whoop_dbt/target/sources.json
           retention-days: 30

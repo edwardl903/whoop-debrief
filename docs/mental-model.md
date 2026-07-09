@@ -8,9 +8,9 @@
 
 ## The big picture in one sentence
 
-Pull daily health metrics (recovery, sleep, strain, workouts) from the WHOOP API,
-land raw responses in BigQuery, and transform them into clean mart tables with dbt
-running nightly on GitHub Actions.
+Pull daily health metrics (recovery, sleep, strain, workouts) from the WHOOP API
+and Strava runs, land raw responses in BigQuery, and transform them into clean mart
+tables with dbt running nightly on GitHub Actions.
 
 ---
 
@@ -21,26 +21,29 @@ INGEST                        TRANSFORM                    SERVE
 ──────                        ─────────                    ─────
 
 WHOOP API (OAuth 2.0)         BigQuery                  (planned)
-  /v1/cycle                   whoop_raw dataset
-  /v1/sleep                     raw_cycles
-  /v1/recovery       ──────►    raw_sleeps       ──────► dbt run
-  /v1/workout                   raw_recoveries              │
-  /v1/user                      raw_workouts          stg_* (views)
-        │                       raw_users                   │
-        ▼                     append-only             int_daily_metrics
-  scripts/fetch.py                                          │
-        │                                           fct_daily (incremental)
-        ▼                                           dim_user (table)
-  GitHub Actions                                    my_trends (table)
-  cron 06:00 UTC                                          │
-  daily_ingest job                               (dashboard / portfolio page)
+  /v2/cycle                   whoop_raw dataset
+  /v2/activity/sleep            raw_cycles
+  /v2/recovery       ──────►    raw_sleeps       ──────► dbt run
+  /v2/activity/workout          raw_recoveries              │
+        │                       raw_workouts           stg_* (views)
+        ▼                                                   │
+  scripts/fetch.py                                   int_daily_metrics
+        │                   Strava API (OAuth 2.0)   int_run_recovery
+        │                   /v3/athlete/activities        │
+        │                          │                      ├── fct_daily (incremental)
+        │                          ▼                      ├── fct_runs (incremental)
+        │                   scripts/fetch_strava.py       ├── dim_user (table)
+        │                          │                      └── my_trends (table)
+        ▼                          ▼
+  GitHub Actions            raw_strava_runs
+  cron 06:00 UTC            pipeline_runs (audit log)
+  ingest job
         │
         ▼
   dbt job (needs: ingest)
-    dbt seed
-    dbt snapshot
     dbt run
     dbt test
+    dbt source freshness
 ```
 
 ---
@@ -53,7 +56,6 @@ WHOOP API (OAuth 2.0)         BigQuery                  (planned)
 | `GET /v2/activity/sleep` | Sleep record (stages, efficiency, respiratory rate, duration) | `raw_sleeps` |
 | `GET /v2/recovery` | Recovery score (%, HRV, resting HR, SpO2, skin temp) | `raw_recoveries` |
 | `GET /v2/activity/workout` | Workout (sport type, duration, strain, HR zones) | `raw_workouts` |
-| `GET /v2/user/profile/basic` | User profile (name, join date) | `raw_users` |
 
 All endpoints support `start` / `end` date params for incremental fetch.
 
@@ -65,6 +67,9 @@ All endpoints support `start` / `end` date params for incremental fetch.
 
 Strava uses page-based pagination (`?after=<epoch>&page=N&per_page=50`).
 Strava credentials are optional — the WHOOP pipeline runs even if `STRAVA_*` env vars are absent.
+
+`raw_strava_runs` includes `summary_polyline` (encoded GPS route shape). Decode and
+render HTML maps locally with `make route-maps`.
 
 ---
 
@@ -80,8 +85,8 @@ whoop_raw.raw_workouts                   │
         ▼  STAGING (views)               ▼  STAGING (view)
 stg_raw_cycles               stg_strava_runs
 stg_raw_sleeps                 pace, distance_km,
-stg_raw_recoveries             speed conversions
-stg_raw_workouts
+stg_raw_recoveries             speed conversions,
+stg_raw_workouts               summary_polyline
         │                                │
         ▼  INTERMEDIATE (table)          │
 int_daily_metrics  ◄─────────────────────┤
@@ -92,13 +97,14 @@ int_daily_metrics  ◄───────────────────�
         │                    run + same-day WHOOP
         │                    + next-day recovery
         │                    recovery_delta derived
+        │                    summary_polyline
         │
         ├────────────────┬──────────────────────┐
         ▼                ▼                      ▼
 MARTS (incremental)  DIMENSION (full)      MART (incremental)
 fct_daily            dim_user              fct_runs
   grain: date          1 row/user            grain: run_id
-        │             averages+peaks
+        │             averages+peaks         GPS polyline
         ▼
 my_trends (full rebuild)
   7d/28d rolling averages
@@ -115,16 +121,17 @@ my_trends (full rebuild)
 | BigQuery | `whoop_raw.raw_sleeps` | scripts/fetch.py | dbt staging |
 | BigQuery | `whoop_raw.raw_recoveries` | scripts/fetch.py | dbt staging |
 | BigQuery | `whoop_raw.raw_workouts` | scripts/fetch.py | dbt staging |
+| BigQuery | `whoop_raw.raw_strava_runs` | scripts/fetch_strava.py | dbt staging |
+| BigQuery | `whoop_raw.pipeline_runs` | fetch.py, fetch_strava.py | audit log |
 | BigQuery | `whoop_dbt.stg_*` | dbt | dbt intermediate |
 | BigQuery | `whoop_dbt.int_daily_metrics` | dbt | dbt marts |
+| BigQuery | `whoop_dbt.int_run_recovery` | dbt | dbt marts |
 | BigQuery | `whoop_dbt.fct_daily` | dbt | serve layer |
+| BigQuery | `whoop_dbt.fct_runs` | dbt | serve layer, route maps |
 | BigQuery | `whoop_dbt.dim_user` | dbt | serve layer |
 | BigQuery | `whoop_dbt.my_trends` | dbt | serve layer |
-| BigQuery | `whoop_raw.raw_strava_runs` | scripts/fetch_strava.py | dbt staging |
-| BigQuery | `whoop_dbt.stg_strava_runs` | dbt | dbt intermediate |
-| BigQuery | `whoop_dbt.int_run_recovery` | dbt | dbt marts |
-| BigQuery | `whoop_dbt.fct_runs` | dbt | serve layer |
-| BigQuery | `whoop_raw.pipeline_runs` | scripts/fetch.py, fetch_strava.py | audit log |
+| Local `output/maps/` | HTML files | scripts/generate_route_maps.py | browser |
+| GitHub Pages | dbt docs site | .github/workflows/dbt-docs.yml | browser |
 
 ---
 
@@ -136,6 +143,7 @@ my_trends (full rebuild)
 | `WHOOP_CLIENT_SECRET` | scripts/auth.py, utils/whoop_client.py | WHOOP app credentials |
 | `WHOOP_ACCESS_TOKEN` | utils/whoop_client.py | Written after OAuth; rotate via refresh |
 | `WHOOP_REFRESH_TOKEN` | utils/whoop_client.py | Used to get new access token |
+| `WHOOP_REDIRECT_URI` | utils/whoop_client.py | Must match WHOOP app registration |
 | `STRAVA_CLIENT_ID` | scripts/auth.py, utils/strava_client.py | Optional; Strava app credentials |
 | `STRAVA_CLIENT_SECRET` | scripts/auth.py, utils/strava_client.py | Optional |
 | `STRAVA_ACCESS_TOKEN` | utils/strava_client.py | Written by `make strava-auth` |
@@ -153,8 +161,7 @@ my_trends (full rebuild)
 
 | Resource | Value |
 |----------|-------|
-| Project | [FILL IN after setup] |
-| Region | `us-central1` (must match ChessLytics to reuse service account) |
+| Region | `us-central1` |
 | Dataset (raw) | `whoop_raw` |
 | Dataset (dbt) | `whoop_dbt` |
 | Service account | `gcp/service_account.json` (gitignored) |
@@ -169,7 +176,7 @@ my_trends (full rebuild)
 4. Python 3.13 only
 5. BigQuery region always `us-central1` — using `US` multi-region causes dataset-not-found errors
 6. dbt models write to `whoop_dbt`; raw ingest writes to `whoop_raw`
-7. Incremental fetch: always use `MAX(uploaded_at)` from BigQuery as the high-water mark, not wall clock time
+7. Incremental fetch: always use `MAX(watermark_col)` from BigQuery as the high-water mark
 8. No credentials in code — env vars only
 
 ---
@@ -178,18 +185,21 @@ my_trends (full rebuild)
 
 | Issue | Priority | Notes |
 |-------|----------|-------|
-| GCP project ID not configured | High | Fill in after first GCP setup |
-| Serve layer undefined | Low | Decide: portfolio page, personal dashboard, or API |
-| dbt docs site | Low | `make dbt-docs` generates locally; GitHub Pages hosting not yet wired |
+| Serve layer undefined | High | Deciding between Streamlit and a custom approach; Looker Studio ruled out |
+| Repo rename | Low | GitHub Settings → rename `whoop-analytics` → `whoop-debrief`, then update URLs in README, dbt-docs.yml, portfolio-story.md (search `whoop-analytics` across docs after rename) |
 
 ### Resolved
 
 | Issue | Resolved | Notes |
 |-------|----------|-------|
+| dbt docs not published | 2026-07-09 | Auto-deployed to GitHub Pages via dbt-docs.yml on push to main |
+| `summary_polyline` not in mart layer | 2026-07-09 | Added to int_run_recovery and flows through fct_runs |
+| Route map rendering | 2026-07-09 | scripts/generate_route_maps.py decodes polyline, renders folium HTML maps |
+| dbt source freshness not in CI | 2026-07-09 | Added as continue-on-error step after dbt test in pipeline.yml |
 | Strava integration not built | 2026-07-09 | utils/strava_client.py, fetch_strava.py, stg_strava_runs, int_run_recovery, fct_runs |
-| dbt staging models not written | 2026-07-09 | All 4 stg_* models + int_daily_metrics + fct_daily + dim_user + my_trends |
+| dbt staging models not written | 2026-07-09 | All stg_* models + int_daily_metrics + fct_daily + dim_user + my_trends |
 | dbt source freshness tests | 2026-07-09 | warn_after 25h / error_after 49h in sources.yml |
-| OAuth token refresh not implemented | 2026-07-07 | Implemented in utils/whoop_client.py — auto-refreshes on 401 |
+| OAuth token refresh not implemented | 2026-07-07 | Implemented in utils/whoop_client.py |
 | Incremental fetch logic not implemented | 2026-07-07 | MAX(watermark_col) from BigQuery in utils/bq_client.get_watermark() |
 
 ---
@@ -198,9 +208,9 @@ my_trends (full rebuild)
 
 - **Pipeline change** (new endpoint, new table, new dbt model): update the system map and "where data lives" table
 - **New env var**: add to the environment variables table
-- **Debt resolved**: remove from open items, add to CHANGELOG.md
+- **Debt resolved**: move from open items to resolved, add to CHANGELOG.md
 - **New feature / serve layer**: add routes or consumers to the system map
 
 ---
 
-*Last updated: 2026-07-09 — Strava integration added*
+*Last updated: 2026-07-09 — route maps, dbt docs on Pages, CI freshness check*

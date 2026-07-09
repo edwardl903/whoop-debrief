@@ -21,3 +21,7 @@ pytest-cov
 
 # Utilities
 python-dotenv
+
+# Route map generation (decode Strava summary_polyline, render HTML maps)
+polyline
+folium

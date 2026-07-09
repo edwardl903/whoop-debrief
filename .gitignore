@@ -7,6 +7,7 @@ gcp/
 
 # Data files — never commit raw data
 data/
+output/
 *.csv
 *.parquet
 *.jsonl
@@ -37,3 +38,7 @@ Thumbs.db
 
 # Cursor private context
 docs/private/
+
+# docs
+docs/
+CHANGELOG.md

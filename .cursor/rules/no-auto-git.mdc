@@ -1,0 +1,16 @@
+---
+description: Never auto-commit or auto-push; Edward commits manually
+alwaysApply: true
+---
+
+# Git: manual commits and pushes only
+
+Never run `git commit`, `git push`, `git add` for staging, or create pull requests unless Edward explicitly asks in the current message.
+
+After making code changes:
+- Leave files modified/unstaged
+- Summarize what changed and which files were touched
+- Tell Edward he can review and commit when ready
+
+Do not commit because a task is "done", CI passed, or changes seem ready to ship.
+Do not push after committing unless Edward explicitly says to push.

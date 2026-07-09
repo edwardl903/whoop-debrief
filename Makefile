@@ -1,4 +1,4 @@
-.PHONY: auth strava-auth fetch fetch-strava fetch-all reset-tables dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
+.PHONY: auth strava-auth fetch fetch-strava fetch-all reset-tables route-maps dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
 
 PYTHON ?= python3.13
 export PYTHONPATH := .
@@ -26,6 +26,11 @@ fetch-all: fetch fetch-strava
 # Drop and recreate all raw tables (use when schemas change)
 reset-tables:
 	$(PYTHON) scripts/reset_tables.py
+
+# Decode Strava GPS polylines and render HTML route maps into output/maps/
+# Pass ARGS="--limit 10" to render only the N most recent runs.
+route-maps:
+	$(PYTHON) scripts/generate_route_maps.py $(ARGS)
 
 # dbt pipeline (--profiles-dir . picks up whoop_dbt/profiles.yml for local dev)
 dbt-deps:
