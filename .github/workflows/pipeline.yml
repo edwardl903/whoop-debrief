@@ -92,7 +92,6 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
         run: |
-          mkdir -p ~/.dbt
           python3 - <<'PYEOF'
           import os, json, pathlib
           raw = os.environ["GOOGLE_APPLICATION_CREDENTIALS_JSON"].strip()
@@ -100,7 +99,9 @@ jobs:
           pathlib.Path("/tmp/sa.json").write_text(json.dumps(info))
           print(f"Wrote service account for project: {info.get('project_id')}")
           PYEOF
-          cat > ~/.dbt/profiles.yml << 'EOF'
+          # Write directly into the project dir so dbt picks up the CI profile
+          # (dbt prefers profiles.yml in the working-directory over ~/.dbt/)
+          cat > whoop_dbt/profiles.yml << 'EOF'
           whoop_dbt:
             target: ci
             outputs:

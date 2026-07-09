@@ -7,10 +7,11 @@ sources:
       Never modified after insertion.
     database: "{{ env_var('BQ_PROJECT') }}"
     schema: whoop_raw
-    loaded_at_field: loaded_at
-    freshness:
-      warn_after: {count: 25, period: hour}
-      error_after: {count: 49, period: hour}
+    config:
+      loaded_at_field: loaded_at
+      freshness:
+        warn_after: {count: 25, period: hour}
+        error_after: {count: 49, period: hour}
 
     tables:
       - name: raw_cycles
@@ -104,9 +105,10 @@ sources:
           Written by scripts/fetch_strava.py. Flat schema with no nested STRUCTs.
           Freshness checked separately; pipeline skips this table if Strava is
           not configured.
-        freshness:
-          warn_after: {count: 49, period: hour}
-          error_after: {count: 97, period: hour}
+        config:
+          freshness:
+            warn_after: {count: 49, period: hour}
+            error_after: {count: 97, period: hour}
         columns:
           - name: id
             description: Strava activity ID (integer).
