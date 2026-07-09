@@ -43,10 +43,10 @@ dbt-deps:
 	cd whoop_dbt && dbt deps --profiles-dir .
 
 dbt-run:
-	$(DBT) run
+	$(DBT) run $(ARGS)
 
 dbt-test:
-	$(DBT) test
+	$(DBT) test $(ARGS)
 
 dbt-seed:
 	$(DBT) seed

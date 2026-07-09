@@ -1,6 +1,6 @@
 """Generate HTML route maps from Strava GPS data stored in BigQuery.
 
-Reads fct_runs from whoop_dbt, decodes the summary_polyline column using the
+Reads int_run_recovery from whoop_dbt, decodes the summary_polyline column using the
 Google Polyline Algorithm, and renders each route as an interactive Leaflet map
 via folium. Output files are written to output/maps/.
 
@@ -92,7 +92,12 @@ def _build_map(run: dict[str, Any]) -> folium.Map:
 
 
 def _fetch_runs(bq: BigQueryClient, limit: int | None) -> list[dict[str, Any]]:
-    """Query fct_runs for runs that have a non-null summary_polyline."""
+    """Query int_run_recovery for runs that have a non-null summary_polyline.
+
+    Uses int_run_recovery (full table rebuild) rather than fct_runs (incremental
+    7-day rescan) so all historical runs with GPS data are included without
+    requiring a --full-refresh on the mart.
+    """
     dataset = bq._config.bq_dataset_dbt
     project = bq._config.bq_project
     limit_clause = f"LIMIT {limit}" if limit else ""
@@ -108,7 +113,7 @@ def _fetch_runs(bq: BigQueryClient, limit: int | None) -> list[dict[str, Any]]:
             next_day_recovery,
             recovery_delta,
             summary_polyline
-        FROM `{project}.{dataset}.fct_runs`
+        FROM `{project}.{dataset}.int_run_recovery`
         WHERE summary_polyline IS NOT NULL
           AND summary_polyline != ''
         ORDER BY run_date DESC
