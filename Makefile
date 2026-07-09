@@ -1,9 +1,15 @@
-.PHONY: auth strava-auth fetch fetch-strava fetch-all reset-tables route-maps dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
+.PHONY: install auth strava-auth fetch fetch-strava fetch-all reset-tables route-maps dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
 
+# Always python3.13 — dbt does not support 3.14. Install deps with `make install`
+# (not plain `pip install` in a 3.14 venv, or Makefile targets won't see them).
 PYTHON ?= python3.13
 export PYTHONPATH := .
 
 DBT = scripts/dbt_with_env.sh
+
+# Install all Python deps into the same interpreter Makefile uses
+install:
+	$(PYTHON) -m pip install -r requirements.txt
 
 # OAuth flow — run once per service to get tokens
 auth:
