@@ -70,6 +70,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: ingest
     timeout-minutes: 20
+    env:
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
 
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +84,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install dbt-bigquery
+          dbt --version
 
       - name: Write dbt profiles.yml + service account key
         env:

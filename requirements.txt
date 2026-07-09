@@ -11,8 +11,8 @@ google-auth-oauthlib
 requests
 requests-oauthlib
 
-# dbt
-dbt-bigquery
+# dbt — pin to 1.11.x to match local dev and package-lock.yml format
+dbt-bigquery>=1.11.3,<1.12
 
 # Quality
 ruff
