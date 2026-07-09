@@ -49,9 +49,11 @@ Manual trigger available from the Actions UI.
 ```bash
 git clone https://github.com/edwardl903/whoop-analytics
 cd whoop-analytics
-python3 -m venv venv && source venv/bin/activate
+python3.13 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+Use **Python 3.13** only. On this Mac, `python3` can resolve to 3.14, and dbt does not support 3.14 yet.
 
 ### 2. Configure environment
 

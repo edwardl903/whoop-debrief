@@ -1,0 +1,99 @@
+version: 2
+
+sources:
+  - name: whoop_raw
+    description: >
+      Append-only raw tables written by scripts/fetch.py from the WHOOP API v2.
+      Never modified after insertion.
+    database: "{{ env_var('BQ_PROJECT') }}"
+    schema: whoop_raw
+    loaded_at_field: loaded_at
+    freshness:
+      warn_after: {count: 25, period: hour}
+      error_after: {count: 49, period: hour}
+
+    tables:
+      - name: raw_cycles
+        description: >
+          One row per daily strain cycle. Each cycle has a start/end timestamp
+          and an optional score containing strain, calories, and heart rate metrics.
+          Score may be absent if WHOOP has not yet processed the cycle.
+        columns:
+          - name: id
+            description: Cycle ID (integer, WHOOP v2).
+          - name: user_id
+            description: WHOOP user ID.
+          - name: start
+            description: Cycle start timestamp (UTC).
+          - name: end
+            description: Cycle end timestamp (UTC).
+          - name: score_state
+            description: "'SCORED', 'PENDING_SCORE', or 'UNSCORABLE'."
+          - name: score
+            description: Nested struct with strain, kilojoule, avg/max HR.
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.
+
+      - name: raw_sleeps
+        description: >
+          One row per sleep or nap record. Linked to a cycle via cycle_id.
+          Contains stage breakdown, sleep quality percentages, and respiratory rate.
+        columns:
+          - name: id
+            description: Sleep UUID (string, WHOOP v2).
+          - name: cycle_id
+            description: Parent cycle ID.
+          - name: user_id
+            description: WHOOP user ID.
+          - name: nap
+            description: True if this record is a nap, not the primary overnight sleep.
+          - name: score_state
+            description: "'SCORED', 'PENDING_SCORE', or 'UNSCORABLE'."
+          - name: score
+            description: >
+              Nested struct with stage_summary (stage durations in ms), sleep_needed,
+              sleep performance/consistency/efficiency percentages, and respiratory rate.
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.
+
+      - name: raw_recoveries
+        description: >
+          One recovery record per cycle. Contains HRV, resting HR, SpO2,
+          skin temperature, and the composite recovery score (0-100).
+        columns:
+          - name: cycle_id
+            description: Cycle ID (natural primary key for recoveries).
+          - name: sleep_id
+            description: UUID of the associated sleep record.
+          - name: user_id
+            description: WHOOP user ID.
+          - name: score_state
+            description: "'SCORED', 'PENDING_SCORE', or 'UNSCORABLE'."
+          - name: score
+            description: >
+              Nested struct with recovery_score, resting_heart_rate, hrv_rmssd_milli,
+              spo2_percentage, skin_temp_celsius, and user_calibrating flag.
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.
+
+      - name: raw_workouts
+        description: >
+          One row per logged workout. Contains sport type, strain score,
+          heart rate metrics, HR zone durations, and optional distance.
+        columns:
+          - name: id
+            description: Workout UUID (string, WHOOP v2).
+          - name: user_id
+            description: WHOOP user ID.
+          - name: sport_id
+            description: Numeric sport code from WHOOP.
+          - name: sport_name
+            description: Human-readable sport name (e.g. "Running", "Cycling").
+          - name: score_state
+            description: "'SCORED', 'PENDING_SCORE', or 'UNSCORABLE'."
+          - name: score
+            description: >
+              Nested struct with strain, avg/max HR, kilojoule, distance,
+              and zone_duration (HR zones 0-5 in milliseconds).
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.

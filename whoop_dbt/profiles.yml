@@ -1,0 +1,21 @@
+# Local dev profile — CI generates its own ~/.dbt/profiles.yml in pipeline.yml.
+# Run dbt commands from whoop_dbt/ with: dbt run --profiles-dir .
+# Or use the Makefile targets which pass --profiles-dir . automatically.
+#
+# Requires:
+#   BQ_PROJECT env var (or set in .env and loaded via dotenv)
+#   GOOGLE_APPLICATION_CREDENTIALS pointing to gcp/service_account.json
+
+whoop_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('BQ_PROJECT') }}"
+      dataset: whoop_dbt
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS', '../gcp/service_account.json') }}"
+      location: us-central1
+      priority: interactive
+      threads: 4
+      timeout_seconds: 300

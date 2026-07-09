@@ -1,0 +1,41 @@
+version: 2
+
+models:
+  - name: int_daily_metrics
+    description: >
+      One row per cycle (day) combining strain, recovery, and primary sleep metrics.
+      Left joins mean a cycle without a scored recovery or sleep still appears
+      (fields will be null). Derived columns: recovery_bucket, sleep_quality_label,
+      total_sleep_hours.
+    columns:
+      - name: cycle_id
+        description: WHOOP cycle ID (natural key for this model).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: cycle_date
+        description: Calendar date of the cycle (UTC).
+        tests:
+          - not_null
+      - name: strain_score
+        description: Day strain score (0-21).
+      - name: recovery_score
+        description: Recovery score (0-100). Null if cycle has no scored recovery.
+      - name: resting_heart_rate
+        description: Resting heart rate (bpm).
+      - name: hrv_rmssd_milli
+        description: HRV RMSSD in milliseconds.
+      - name: total_sleep_hours
+        description: Net sleep hours (in_bed_hours minus awake_hours).
+      - name: sleep_performance_pct
+        description: WHOOP sleep performance score (0-100).
+      - name: recovery_bucket
+        description: "Categorical recovery tier: 'peak' (>=67), 'optimal' (34-66), 'poor' (<34)."
+      - name: sleep_quality_label
+        description: "Categorical sleep label: 'excellent' (>=85), 'good' (70-84), 'fair' (50-69), 'poor' (<50)."
+      - name: loaded_at
+        description: Pipeline insertion timestamp (from raw_cycles, used as watermark).

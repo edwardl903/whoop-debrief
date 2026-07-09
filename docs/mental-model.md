@@ -159,16 +159,16 @@ my_trends  (table, full rebuild)
 
 | Issue | Priority | Notes |
 |-------|----------|-------|
-| dbt staging models not written | High | Blocking everything downstream |
 | GCP project ID not configured | High | Fill in after first GCP setup |
 | Serve layer undefined | Low | Decide: portfolio page, personal dashboard, or API |
-| dbt source freshness tests | Low | Add warn_after/error_after on raw sources |
-| dbt documentation site | Low | dbt docs generate + GitHub Pages |
+| dbt docs site | Low | `make dbt-docs` generates locally; GitHub Pages hosting not yet wired |
 
 ### Resolved
 
 | Issue | Resolved | Notes |
 |-------|----------|-------|
+| dbt staging models not written | 2026-07-09 | All 4 stg_* models + int_daily_metrics + fct_daily + dim_user + my_trends |
+| dbt source freshness tests | 2026-07-09 | warn_after 25h / error_after 49h in sources.yml |
 | OAuth token refresh not implemented | 2026-07-07 | Implemented in utils/whoop_client.py — auto-refreshes on 401 |
 | Incremental fetch logic not implemented | 2026-07-07 | MAX(watermark_col) from BigQuery in utils/bq_client.get_watermark() |
 
@@ -183,4 +183,4 @@ my_trends  (table, full rebuild)
 
 ---
 
-*Last updated: 2026-07-07 — ingest layer implemented*
+*Last updated: 2026-07-09 — dbt layer implemented*

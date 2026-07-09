@@ -1,0 +1,162 @@
+version: 2
+
+models:
+  - name: stg_raw_cycles
+    description: >
+      Deduplicated and cleaned cycle records. Each row is one daily strain cycle.
+      Score fields unpacked from the raw STRUCT. Rows with no score (PENDING/UNSCORABLE)
+      are retained so downstream models can filter as needed.
+    columns:
+      - name: cycle_id
+        description: WHOOP cycle ID (integer).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: cycle_date
+        description: Calendar date of the cycle start (UTC).
+        tests:
+          - not_null
+      - name: cycle_start
+        description: Cycle start timestamp (UTC).
+      - name: cycle_end
+        description: Cycle end timestamp (UTC).
+      - name: score_state
+        description: "'SCORED', 'PENDING_SCORE', or 'UNSCORABLE'."
+      - name: strain_score
+        description: Day strain score (0-21 scale).
+      - name: kilojoule
+        description: Total energy expenditure in kilojoules.
+      - name: avg_heart_rate
+        description: Average heart rate across the cycle (bpm).
+      - name: max_heart_rate
+        description: Peak heart rate across the cycle (bpm).
+      - name: loaded_at
+        description: Pipeline insertion timestamp (watermark column).
+
+  - name: stg_raw_sleeps
+    description: >
+      Deduplicated and cleaned sleep records, with stage durations converted from
+      milliseconds to hours. Nap records are included; filter on is_nap = false
+      for primary overnight sleeps.
+    columns:
+      - name: sleep_id
+        description: Sleep UUID (string, WHOOP v2).
+        tests:
+          - not_null
+          - unique
+      - name: cycle_id
+        description: Parent cycle ID.
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: is_nap
+        description: True if this is a nap, not the primary overnight sleep.
+      - name: sleep_date
+        description: Calendar date of sleep end (UTC).
+      - name: in_bed_hours
+        description: Total time in bed (hours).
+      - name: awake_hours
+        description: Time awake during the sleep period (hours).
+      - name: light_sleep_hours
+        description: Light sleep duration (hours).
+      - name: sws_hours
+        description: Slow-wave (deep) sleep duration (hours).
+      - name: rem_hours
+        description: REM sleep duration (hours).
+      - name: sleep_cycle_count
+        description: Number of complete sleep cycles.
+      - name: disturbance_count
+        description: Number of sleep disturbances detected.
+      - name: sleep_needed_baseline_hours
+        description: Baseline sleep need (hours).
+      - name: sleep_need_from_debt_hours
+        description: Extra sleep needed due to accumulated sleep debt (hours).
+      - name: respiratory_rate
+        description: Average respiratory rate during sleep (breaths/min).
+      - name: sleep_performance_pct
+        description: WHOOP sleep performance score (0-100).
+      - name: sleep_consistency_pct
+        description: Sleep consistency vs. recent schedule (0-100).
+      - name: sleep_efficiency_pct
+        description: Ratio of time asleep to time in bed (0-100).
+      - name: loaded_at
+        description: Pipeline insertion timestamp (watermark column).
+
+  - name: stg_raw_recoveries
+    description: >
+      Deduplicated recovery records. One row per cycle. Contains HRV, resting HR,
+      SpO2, skin temperature, and the composite recovery score.
+    columns:
+      - name: cycle_id
+        description: Cycle ID (natural primary key for recoveries).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: recovery_score
+        description: WHOOP recovery score (0-100).
+      - name: resting_heart_rate
+        description: Resting heart rate (bpm).
+      - name: hrv_rmssd_milli
+        description: HRV RMSSD in milliseconds (higher = better recovery).
+      - name: spo2_pct
+        description: Blood oxygen saturation (%).
+      - name: skin_temp_celsius
+        description: Skin temperature (°C).
+      - name: is_calibrating
+        description: True if WHOOP is still calibrating baselines for this user.
+      - name: recovery_date
+        description: Calendar date of the recovery (from created_at).
+      - name: loaded_at
+        description: Pipeline insertion timestamp (watermark column).
+
+  - name: stg_raw_workouts
+    description: >
+      Deduplicated workout records with HR zone durations converted from
+      milliseconds to minutes.
+    columns:
+      - name: workout_id
+        description: Workout UUID (string, WHOOP v2).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: sport_name
+        description: Human-readable sport name (e.g. "Running", "Cycling").
+      - name: workout_date
+        description: Calendar date of the workout start (UTC).
+      - name: strain_score
+        description: Workout strain score (0-21 scale).
+      - name: avg_heart_rate
+        description: Average heart rate during the workout (bpm).
+      - name: max_heart_rate
+        description: Peak heart rate during the workout (bpm).
+      - name: kilojoule
+        description: Calories burned in kilojoules.
+      - name: distance_meter
+        description: Distance covered in meters (null for non-distance sports).
+      - name: zone_0_min
+        description: Time in HR zone 0 (very light, < 50% max HR) in minutes.
+      - name: zone_1_min
+        description: Time in HR zone 1 (light, 50-60% max HR) in minutes.
+      - name: zone_2_min
+        description: Time in HR zone 2 (moderate, 60-70% max HR) in minutes.
+      - name: zone_3_min
+        description: Time in HR zone 3 (hard, 70-80% max HR) in minutes.
+      - name: zone_4_min
+        description: Time in HR zone 4 (very hard, 80-90% max HR) in minutes.
+      - name: zone_5_min
+        description: Time in HR zone 5 (max effort, > 90% max HR) in minutes.
+      - name: loaded_at
+        description: Pipeline insertion timestamp (watermark column).

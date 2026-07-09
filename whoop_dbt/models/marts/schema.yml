@@ -1,0 +1,102 @@
+version: 2
+
+models:
+  - name: fct_daily
+    description: >
+      Incremental fact table with one row per cycle (day). Merges on cycle_id so
+      any WHOOP rescore updates the existing row. Re-processes the last 7 days on
+      every run to catch late-arriving scores. Includes all strain, recovery, and
+      sleep metrics alongside derived buckets and labels.
+    columns:
+      - name: cycle_id
+        description: WHOOP cycle ID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: cycle_date
+        description: Calendar date of the cycle (UTC).
+        tests:
+          - not_null
+      - name: strain_score
+        description: Day strain score (0-21).
+      - name: recovery_score
+        description: Recovery score (0-100).
+      - name: hrv_rmssd_milli
+        description: HRV RMSSD in milliseconds.
+      - name: total_sleep_hours
+        description: Net sleep hours (in_bed minus awake).
+      - name: recovery_bucket
+        description: "Tier: 'peak', 'optimal', or 'poor'."
+      - name: sleep_quality_label
+        description: "Tier: 'excellent', 'good', 'fair', or 'poor'."
+      - name: dbt_updated_at
+        description: Timestamp of the last dbt run that touched this row.
+
+  - name: dim_user
+    description: >
+      One row per user. Full rebuild on every run. Contains lifetime aggregates
+      (averages and peaks) for recovery, strain, sleep, and HRV.
+    columns:
+      - name: user_id
+        description: WHOOP user ID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: total_tracked_days
+        description: Number of days with a scored recovery.
+      - name: first_tracked_date
+        description: Earliest date with a scored recovery.
+      - name: latest_tracked_date
+        description: Most recent date with a scored recovery.
+      - name: avg_recovery_score
+        description: Lifetime average recovery score.
+      - name: peak_recovery_score
+        description: Highest single-day recovery score.
+      - name: avg_strain_score
+        description: Lifetime average day strain score.
+      - name: avg_sleep_hours
+        description: Lifetime average net sleep hours per night.
+      - name: avg_hrv_rmssd_milli
+        description: Lifetime average HRV RMSSD.
+      - name: peak_hrv_rmssd_milli
+        description: Highest single-night HRV RMSSD.
+      - name: dbt_updated_at
+        description: Timestamp of the last dbt run.
+
+  - name: my_trends
+    description: >
+      Full rebuild on every run. One row per (cycle_date, user_id). Provides
+      pre-aggregated 7-day and 28-day rolling averages for recovery, strain, sleep,
+      and HRV. Also includes day-over-day deltas for trend arrows in dashboards.
+      Designed for direct consumption by the serve layer.
+    columns:
+      - name: cycle_date
+        description: Calendar date.
+        tests:
+          - not_null
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: recovery_score_7d_avg
+        description: 7-day rolling average recovery score.
+      - name: strain_score_7d_avg
+        description: 7-day rolling average day strain.
+      - name: sleep_performance_7d_avg
+        description: 7-day rolling average sleep performance percentage.
+      - name: hrv_7d_avg
+        description: 7-day rolling average HRV RMSSD (ms).
+      - name: recovery_score_28d_avg
+        description: 28-day rolling average recovery score.
+      - name: hrv_28d_avg
+        description: 28-day rolling average HRV RMSSD (ms).
+      - name: recovery_score_dod
+        description: Day-over-day change in recovery score.
+      - name: strain_score_dod
+        description: Day-over-day change in strain score.
+      - name: hrv_dod
+        description: Day-over-day change in HRV RMSSD (ms).

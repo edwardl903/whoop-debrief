@@ -1,7 +1,9 @@
 .PHONY: auth fetch reset-tables dbt-run dbt-test all lint format test
 
-PYTHON ?= python
+PYTHON ?= python3.13
 export PYTHONPATH := .
+
+DBT = scripts/dbt_with_env.sh
 
 # OAuth flow — run once to get tokens
 auth:
@@ -15,18 +17,27 @@ fetch:
 reset-tables:
 	$(PYTHON) scripts/reset_tables.py
 
-# dbt pipeline
+# dbt pipeline (--profiles-dir . picks up whoop_dbt/profiles.yml for local dev)
+dbt-deps:
+	cd whoop_dbt && dbt deps --profiles-dir .
+
 dbt-run:
-	cd whoop_dbt && dbt run
+	$(DBT) run
 
 dbt-test:
-	cd whoop_dbt && dbt test
+	$(DBT) test
 
 dbt-seed:
-	cd whoop_dbt && dbt seed
+	$(DBT) seed
 
 dbt-snapshot:
-	cd whoop_dbt && dbt snapshot
+	$(DBT) snapshot
+
+dbt-freshness:
+	$(DBT) source freshness
+
+dbt-docs:
+	$(DBT) docs generate && $(DBT) docs serve
 
 # Full nightly pipeline
 all: fetch dbt-seed dbt-snapshot dbt-run dbt-test

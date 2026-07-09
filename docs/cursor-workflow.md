@@ -58,7 +58,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 | Pipeline schedule | GitHub Actions, 06:00 UTC daily |
 | Auth | WHOOP OAuth 2.0; tokens in `.env` (gitignored) |
 | Python version | 3.13 |
-| Status | Ingest layer complete — dbt not yet implemented |
+| Status | Ingest layer complete — dbt models implemented |
 
 ---
 
@@ -81,6 +81,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 
 | Date | Change |
 |------|--------|
+| 2026-07-09 | dbt layer complete: 4 staging models, int_daily_metrics, fct_daily (incremental), dim_user, my_trends + full schema.yml tests + sources.yml freshness |
 | 2026-07-07 | Migrated WHOOP client to API v2 (v1 paths 404 for sleep/recovery/workout); fixed `_ALL_TABLES` KeyError |
 | 2026-07-07 | Project named **WHOOP Debrief**; README, portfolio-story, docs updated |
 | 2026-07-07 | Ingest layer implemented: utils/config.py, utils/logging_setup.py, utils/whoop_client.py, utils/bq_client.py, scripts/auth.py, scripts/fetch.py, tests/ (51 tests, 0 failures). docs/portfolio-story.md added. |

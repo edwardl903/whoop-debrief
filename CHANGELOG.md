@@ -7,6 +7,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added (2026-07-09 — dbt layer)
+
+- `whoop_dbt/dbt_project.yml` — project config with per-layer materialization (staging: view, intermediate: table, marts: table)
+- `whoop_dbt/packages.yml` — dbt-labs/dbt_utils dependency
+- `whoop_dbt/profiles.yml` — local dev profile using `env_var('BQ_PROJECT')` and service account keyfile; CI still generates its own profile in pipeline.yml
+- `whoop_dbt/models/staging/sources.yml` — `whoop_raw` source declaration with `loaded_at_field` and freshness thresholds (warn 25h, error 49h)
+- `whoop_dbt/models/staging/stg_raw_cycles.sql` — casts, renames, unpacks score STRUCT, dedups by cycle_id
+- `whoop_dbt/models/staging/stg_raw_sleeps.sql` — ms durations → hours, stage summary unpacked, dedups by sleep UUID
+- `whoop_dbt/models/staging/stg_raw_recoveries.sql` — score STRUCT unpacked, dedups by cycle_id
+- `whoop_dbt/models/staging/stg_raw_workouts.sql` — zone durations ms → minutes, score STRUCT unpacked, dedups by workout UUID
+- `whoop_dbt/models/staging/schema.yml` — not_null + unique tests on all staging PKs
+- `whoop_dbt/models/intermediate/int_daily_metrics.sql` — joins cycles + recoveries + primary sleep (non-nap) on cycle_id; derives recovery_bucket (peak/optimal/poor) and sleep_quality_label (excellent/good/fair/poor)
+- `whoop_dbt/models/intermediate/schema.yml` — not_null + unique tests on cycle_id
+- `whoop_dbt/models/marts/fct_daily.sql` — incremental merge on cycle_id; re-scans last 7 days to catch WHOOP rescores
+- `whoop_dbt/models/marts/dim_user.sql` — full rebuild; lifetime averages + peaks per user
+- `whoop_dbt/models/marts/my_trends.sql` — full rebuild; 7-day and 28-day rolling averages for recovery, strain, sleep, HRV; day-over-day deltas for trend indicators
+- `whoop_dbt/models/marts/schema.yml` — not_null + unique tests on all mart PKs
+- `Makefile` — added `dbt-deps`, `dbt-freshness`, `dbt-docs` targets; all dbt targets now pass `--profiles-dir .` for local dev
+
 ### Changed (2026-07-07)
 
 - Project named **WHOOP Debrief** (tagline: "What did your body learn last night?"); branding updated in README, portfolio-story, docs, and Cursor rules. GitHub repo slug remains `whoop-analytics` until renamed.
