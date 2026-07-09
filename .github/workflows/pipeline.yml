@@ -72,6 +72,8 @@ jobs:
     timeout-minutes: 20
     env:
       DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      # BQ_PROJECT is read by env_var('BQ_PROJECT') in sources.yml and profiles.yml
+      BQ_PROJECT: ${{ vars.BQ_PROJECT }}
 
     steps:
       - uses: actions/checkout@v4
@@ -117,14 +119,6 @@ jobs:
       - name: dbt deps
         working-directory: whoop_dbt
         run: dbt deps
-
-      - name: dbt seed
-        working-directory: whoop_dbt
-        run: dbt seed
-
-      - name: dbt snapshot
-        working-directory: whoop_dbt
-        run: dbt snapshot
 
       - name: dbt run
         working-directory: whoop_dbt
