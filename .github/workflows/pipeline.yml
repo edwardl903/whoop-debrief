@@ -10,6 +10,10 @@ on:
         type: boolean
         default: false
 
+# Allow the dbt job to push runs.json back to main
+permissions:
+  contents: write
+
 jobs:
   ingest:
     name: Ingest WHOOP data → BigQuery
@@ -135,6 +139,25 @@ jobs:
         # no new runs have been logged within the warn window.
         continue-on-error: true
         run: dbt source freshness
+
+      - name: Export runs.json for portfolio
+        env:
+          PYTHONPATH: .
+          BQ_PROJECT: ${{ vars.BQ_PROJECT }}
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+        run: python scripts/export_runs_json.py
+
+      - name: Commit and push runs.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/runs.json
+          if git diff --staged --quiet; then
+            echo "runs.json unchanged — nothing to commit"
+          else
+            git commit -m "chore(data): refresh runs.json [skip ci]"
+            git push
+          fi
 
       - name: Upload dbt artifacts
         if: always()

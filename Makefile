@@ -1,4 +1,4 @@
-.PHONY: install auth strava-auth fetch fetch-strava fetch-all reset-tables route-maps dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
+.PHONY: install auth strava-auth fetch fetch-strava fetch-all reset-tables route-maps export-runs dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
 
 # Always python3.13 — dbt does not support 3.14. Install deps with `make install`
 # (not plain `pip install` in a 3.14 venv, or Makefile targets won't see them).
@@ -37,6 +37,10 @@ reset-tables:
 # Pass ARGS="--limit 10" to render only the N most recent runs.
 route-maps:
 	$(PYTHON) scripts/generate_route_maps.py $(ARGS)
+
+# Export int_run_recovery → data/runs.json for the portfolio static serve layer
+export-runs:
+	$(PYTHON) scripts/export_runs_json.py
 
 # dbt pipeline (--profiles-dir . picks up whoop_dbt/profiles.yml for local dev)
 dbt-deps:
