@@ -99,7 +99,7 @@ def load_config() -> Config:
     return Config(
         whoop_client_id=os.environ["WHOOP_CLIENT_ID"],
         whoop_client_secret=os.environ["WHOOP_CLIENT_SECRET"],
-        whoop_redirect_uri=os.getenv("WHOOP_REDIRECT_URI"),
+        whoop_redirect_uri=os.getenv("WHOOP_REDIRECT_URI") or None,
         whoop_access_token=os.environ["WHOOP_ACCESS_TOKEN"],
         whoop_refresh_token=os.environ["WHOOP_REFRESH_TOKEN"],
         strava_client_id=os.getenv("STRAVA_CLIENT_ID") or None,

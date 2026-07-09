@@ -91,7 +91,9 @@ class WhoopClient:
         resp = self._session.post(_TOKEN_URL, data=payload, timeout=30)
         if not resp.ok:
             raise TokenRefreshError(
-                f"Token refresh failed ({resp.status_code}): {resp.text}"
+                f"Token refresh failed ({resp.status_code}): {resp.text}. "
+                f"If running in GitHub Actions, sync fresh tokens from .env: "
+                f"./scripts/sync_github_secrets.sh"
             )
         tokens = resp.json()
         self._access_token = tokens["access_token"]

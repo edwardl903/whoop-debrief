@@ -45,6 +45,7 @@ jobs:
           python scripts/fetch.py $ARGS
 
       - name: Run Strava fetch (skips if credentials not set)
+        continue-on-error: true
         env:
           PYTHONPATH: .
           BQ_PROJECT: ${{ vars.BQ_PROJECT }}
