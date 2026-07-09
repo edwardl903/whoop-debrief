@@ -185,6 +185,7 @@ _SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("max_heartrate", "FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField("average_cadence", "FLOAT64", mode="NULLABLE"),
         bigquery.SchemaField("suffer_score", "FLOAT64", mode="NULLABLE"),
+        bigquery.SchemaField("summary_polyline", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("loaded_at", "TIMESTAMP", mode="REQUIRED"),
     ],
     "pipeline_runs": [

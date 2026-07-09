@@ -138,5 +138,10 @@ sources:
             description: Average cadence in steps/min (null if no sensor).
           - name: suffer_score
             description: Strava suffer score (relative effort).
+          - name: summary_polyline
+            description: >
+              Encoded polyline (Google Polyline Algorithm) representing the
+              route shape. Decode with polyline.decode() to get lat/lng pairs.
+              Null when the activity has no GPS data.
           - name: loaded_at
             description: Timestamp when the row was inserted by the pipeline.

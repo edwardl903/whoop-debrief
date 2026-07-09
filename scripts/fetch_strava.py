@@ -66,6 +66,7 @@ def _flatten_run(r: dict[str, Any], loaded_at: str) -> dict[str, Any]:
         "max_heartrate": r.get("max_heartrate"),
         "average_cadence": r.get("average_cadence"),
         "suffer_score": r.get("suffer_score"),
+        "summary_polyline": (r.get("map") or {}).get("summary_polyline"),
         "loaded_at": loaded_at,
     }
 

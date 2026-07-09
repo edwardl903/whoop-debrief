@@ -46,6 +46,7 @@ deduped as (
         -- Other metrics
         average_cadence,
         suffer_score,
+        summary_polyline,
 
         loaded_at
     from source
