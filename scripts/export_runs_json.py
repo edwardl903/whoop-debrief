@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import pathlib
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -96,7 +96,7 @@ def main() -> int:
     logger.info("Fetched rows", extra={"count": len(runs)})
 
     payload: dict[str, Any] = {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_count": len(runs),
         "runs": runs,
     }

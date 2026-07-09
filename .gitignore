@@ -2,11 +2,11 @@
 .env
 *.json
 !*.example.json
+!data/runs.json
 credentials/
 gcp/
 
-# Data files — never commit raw data
-data/
+# Data files — never commit raw data (data/runs.json is explicitly allowed above)
 output/
 *.csv
 *.parquet
