@@ -21,7 +21,7 @@ from decimal import Decimal
 from typing import Any
 
 from utils.bq_client import BigQueryClient
-from utils.config import load_config
+from utils.config import load_bq_only_config
 from utils.logging_setup import configure_logging
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ def _fetch_runs(bq: BigQueryClient) -> list[dict[str, Any]]:
 
 def main() -> int:
     configure_logging()
-    config = load_config()
+    config = load_bq_only_config()
     bq = BigQueryClient(config)
 
     logger.info("Fetching runs from BigQuery")

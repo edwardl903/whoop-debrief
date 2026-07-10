@@ -69,12 +69,8 @@ def _resolve_bq_project(creds_json: str | None) -> str | None:
     return None
 
 
-def load_config() -> Config:
-    """Load and validate config from environment. Raises EnvironmentError on missing vars."""
-    missing = [k for k in _REQUIRED if not os.getenv(k)]
-    if missing:
-        raise EnvironmentError(f"Missing required env vars: {', '.join(missing)}")
-
+def _load_bq_credentials() -> tuple[str | None, str | None, str]:
+    """Validate and return (creds_json, creds_path, bq_project). Raises on missing GCP config."""
     creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
     creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     if not creds_json and not creds_path:
@@ -82,7 +78,6 @@ def load_config() -> Config:
             "Must set GOOGLE_APPLICATION_CREDENTIALS_JSON (Actions) "
             "or GOOGLE_APPLICATION_CREDENTIALS (local path)"
         )
-
     bq_project = _resolve_bq_project(creds_json)
     if not bq_project and creds_path:
         try:
@@ -95,6 +90,43 @@ def load_config() -> Config:
             "Missing BQ_PROJECT. Set the env var or include project_id in your "
             "service account JSON."
         )
+    return creds_json, creds_path, bq_project
+
+
+def load_bq_only_config() -> Config:
+    """Load config with only BigQuery credentials validated.
+
+    Use this for scripts that read from BigQuery but do not call the WHOOP API
+    (e.g. export_runs_json.py). WHOOP token fields are set to empty strings so
+    the Config dataclass stays valid, but they are never used.
+    """
+    creds_json, creds_path, bq_project = _load_bq_credentials()
+    return Config(
+        whoop_client_id="",
+        whoop_client_secret="",
+        whoop_redirect_uri=None,
+        whoop_access_token="",
+        whoop_refresh_token="",
+        strava_client_id=os.getenv("STRAVA_CLIENT_ID") or None,
+        strava_client_secret=os.getenv("STRAVA_CLIENT_SECRET") or None,
+        strava_access_token=os.getenv("STRAVA_ACCESS_TOKEN") or None,
+        strava_refresh_token=os.getenv("STRAVA_REFRESH_TOKEN") or None,
+        bq_project=bq_project,
+        bq_dataset_raw=os.getenv("BQ_DATASET_RAW", "whoop_raw"),
+        bq_dataset_dbt=os.getenv("BQ_DATASET_DBT", "whoop_dbt"),
+        bq_location=os.getenv("BQ_LOCATION", "us-central1"),
+        google_credentials_json=creds_json,
+        google_credentials_path=creds_path,
+    )
+
+
+def load_config() -> Config:
+    """Load and validate config from environment. Raises EnvironmentError on missing vars."""
+    missing = [k for k in _REQUIRED if not os.getenv(k)]
+    if missing:
+        raise EnvironmentError(f"Missing required env vars: {', '.join(missing)}")
+
+    creds_json, creds_path, bq_project = _load_bq_credentials()
 
     return Config(
         whoop_client_id=os.environ["WHOOP_CLIENT_ID"],
