@@ -76,16 +76,14 @@ class WhoopClient:
 
     def _refresh_access_token(self) -> None:
         logger.info("Refreshing WHOOP access token")
-        redirect_uri = (
-            self._config.whoop_redirect_uri or "http://localhost:8080/callback"
-        )
+        # redirect_uri is NOT part of the refresh-token grant (RFC 6749 §6).
+        # Including it causes WHOOP to return 400 invalid_request.
         payload: dict[str, str] = {
             "grant_type": "refresh_token",
             "refresh_token": self._refresh_token,
             "client_id": self._config.whoop_client_id,
             "client_secret": self._config.whoop_client_secret,
             "scope": "offline",
-            "redirect_uri": redirect_uri,
         }
 
         resp = self._session.post(_TOKEN_URL, data=payload, timeout=30)
