@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-11T08:06:29.384130+00:00",
+  "generated_at": "2026-07-13T14:49:17.466306+00:00",
   "run_count": 17,
   "runs": [
     {
@@ -18,19 +18,19 @@
       "average_cadence": null,
       "suffer_score": 37.0,
       "summary_polyline": "__qaG|{}pLN_@FEJMDUNSTq@@HLN@?DCD[AKLCNg@LIFa@TU@KDEPMHg@LWAO@KPADMHIBULSB?JSEUBCCe@Yy@Ug@CIBKPYH[P[Xq@HKVi@@IHQNSRe@@EMYCY@MEG@CNMJALKNc@PWDQFEJY~AyC`@g@LILSHGj@s@b@a@bBaAf@ONK`@MHG^QNKJANMx@SNQNCr@]P@NAnAc@bGeCrAc@nAi@nCaAl@YxDwAvAk@NMEKGASJWHE?AK@E\\CHEJG@EIwAA_AGo@q@oDWgAUyAOoASw@Ky@a@oBIu@AmAS[EW[LE?KHU@WEMIKMMWKY{BuLK_A?cAMe@Ue@YiAk@yCOcAq@gDKy@i@eB?IWiA_AmFUy@Qc@[i@W]{@_AKQKg@GkA?{@GWUOUIMQIQKi@W_@IEG?aAa@s@QUI[Ec@Os@QEGi@GGGIUW[[WSKWCSFKJOb@SROBSGKQIc@g@mBKMWKIKAODs@AICCCBCDARGRE`@ITKr@Cz@@XE`B@h@Kx@Bb@I`B@XM~B?f@CVAl@GbACdBUtGA`AYvE?`A@HT?JJTd@NRD@HLHXBTNj@HpALVLp@BBJ@DD@FAVNf@Hx@BJP?LPVjAn@dCXfBJ^L|@z@fDPx@HLFn@n@hCRbAN`@RjAHLT|@F^j@xBFh@ZxAFHPp@~AhG^bCZhALv@Xp@H\\?HWRk@RYTWJYFs@ZUDi@Va@JUNI?ABYHIHQB_AbAMT_@V]ZMTIHIPc@n@Cf@HTG`@ENW`@CHKJADMROd@]f@e@hA?BIJCFIF?DKPCHe@d@I`@Qd@MNMZKJEPIDI\\UVEPOROb@KNOb@a@t@OREPOPIRETMHIJOJMRGT@FRLHPNFT^D?",
-      "same_day_strain": 15.913051,
-      "same_day_avg_hr": 66,
+      "same_day_strain": 15.912541,
+      "same_day_avg_hr": 67,
       "same_day_recovery": 37.0,
       "same_day_recovery_bucket": "optimal",
       "same_day_hrv": 73.59134,
-      "next_day_recovery": null,
-      "next_day_recovery_bucket": null,
-      "next_day_hrv": null,
-      "next_day_resting_hr": null,
-      "next_day_sleep_performance": null,
-      "next_day_sleep_hours": null,
-      "next_day_sleep_quality": null,
-      "recovery_delta": null,
+      "next_day_recovery": 28.0,
+      "next_day_recovery_bucket": "poor",
+      "next_day_hrv": 59.242386,
+      "next_day_resting_hr": 52.0,
+      "next_day_sleep_performance": 81.0,
+      "next_day_sleep_hours": 7.28,
+      "next_day_sleep_quality": "good",
+      "recovery_delta": -9.0,
       "loaded_at": "2026-07-11 08:04:57.830619+00"
     },
     {
