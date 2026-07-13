@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      secrets: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -49,8 +49,17 @@ jobs:
       - name: Rotate WHOOP tokens in GitHub Secrets
         if: always()
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GH_PAT must be a fine-grained PAT (or classic PAT with repo scope)
+          # with Secrets: Read and Write on this repository.
+          # Create one at https://github.com/settings/tokens and store it as
+          # the GH_PAT repository secret.
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "GH_PAT not configured — skipping automatic token rotation"
+            echo "Set GH_PAT (fine-grained PAT, Secrets: write) to enable auto-rotation"
+            exit 0
+          fi
           if [ -f /tmp/whoop_tokens.env ]; then
             echo "Token rotation detected — pushing new tokens to GitHub Secrets"
             source /tmp/whoop_tokens.env
