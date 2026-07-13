@@ -105,6 +105,16 @@ class WhoopClient:
         """True if a token refresh happened during this client session."""
         return self._tokens_refreshed
 
+    @property
+    def access_token(self) -> str:
+        """Current access token (may be newer than what was passed in config)."""
+        return self._access_token
+
+    @property
+    def refresh_token(self) -> str:
+        """Current refresh token (may be newer than what was passed in config)."""
+        return self._refresh_token
+
     # -------------------------------------------------------- low-level fetch
 
     def _get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:

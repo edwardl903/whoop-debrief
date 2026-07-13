@@ -299,6 +299,21 @@ def main(argv: list[str] | None = None) -> int:
             bq.log_pipeline_run(result)
 
     failed = [r for r in results if r["status"] == "failed"]
+
+    # Write rotated tokens to a file so the CI step can push them back to
+    # GitHub Secrets. This must happen before we return so the file exists
+    # even when some endpoints fail after a successful refresh.
+    if whoop.tokens_refreshed:
+        import os
+        tokens_out = os.environ.get("WHOOP_TOKENS_OUT", "/tmp/whoop_tokens.env")
+        with open(tokens_out, "w") as fh:
+            fh.write(f"WHOOP_ACCESS_TOKEN={whoop.access_token}\n")
+            fh.write(f"WHOOP_REFRESH_TOKEN={whoop.refresh_token}\n")
+        logger.info(
+            "Wrote rotated tokens to file for secret rotation",
+            extra={"path": tokens_out},
+        )
+
     if failed:
         logger.error(
             "Pipeline finished with failures",
@@ -313,12 +328,6 @@ def main(argv: list[str] | None = None) -> int:
             "total_inserted": sum(r["rows_inserted"] for r in results),
         },
     )
-    if whoop.tokens_refreshed:
-        logger.warning(
-            "WHOOP tokens were refreshed during this run. "
-            "Update WHOOP_ACCESS_TOKEN and WHOOP_REFRESH_TOKEN in GitHub "
-            "secrets from your local .env before the next scheduled run."
-        )
     return 0
 
 
