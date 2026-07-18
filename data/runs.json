@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T07:50:23.090540+00:00",
+  "generated_at": "2026-07-18T07:24:57.438852+00:00",
   "run_count": 19,
   "runs": [
     {
@@ -18,19 +18,19 @@
       "average_cadence": null,
       "suffer_score": 38.0,
       "summary_polyline": "ifiaGdfspLF?DEBOKqA?m@@UBEAEZoB\\aARy@Vc@`@c@p@WP@ZAH@N?HC@CEY?KPQJa@V}@PYFc@DK^sA^eAF_@Na@JSDYL_@F[h@}ADUr@aCf@U\\KBE@I`BgFfAsDRu@NmAFORGLFJPb@jBZn@TTTFb@ARSLa@Be@h@cCn@_CD[@[He@j@sACOKQ@IXmAN{@Rw@XgBFM@CJCN?j@Ep@IZ@PEXCVBXGHBf@EBBJ?TGDDb@ABCV?DAH@PCPABBj@Cn@Qb@YNANDHHFPDTGn@BNHHXd@Z`@v@nAX\\^j@Z`@hBlCHH@Fd@n@@FJFJTRR@DDDNVHFb@t@p@z@NXPj@BLBh@AXGf@]t@]p@IJSf@m@bAk@hA[h@c@~@a@p@a@z@CBMXEBa@|@EB_@z@Wf@EBEJo@nACBMZ[d@CJKPAFOTAFiApBi@lAE@oAzBITCf@DZNf@LRpB|E?GyA_Dq@cBGUAO@YFYXi@b@aAFEJYLOLYhAqBt@{A~AwC~@iBn@kA`@}@rA}B`AoBDCR_@h@mAT_@z@sBFcAEu@I]O_@IK[i@kCqD]m@SSk@{@KSi@w@IGeEcGEMFg@?OGWGKIGICK?OF_@Vg@LkADQCE@EBWAIBqA@QDUAc@FW?CBECQ?CBUCOBK?OBID@DA@AA",
-      "same_day_strain": 14.279925,
-      "same_day_avg_hr": 65,
+      "same_day_strain": 14.279368,
+      "same_day_avg_hr": 66,
       "same_day_recovery": 40.0,
       "same_day_recovery_bucket": "optimal",
       "same_day_hrv": 65.03439,
-      "next_day_recovery": null,
-      "next_day_recovery_bucket": null,
-      "next_day_hrv": null,
-      "next_day_resting_hr": null,
-      "next_day_sleep_performance": null,
-      "next_day_sleep_hours": null,
-      "next_day_sleep_quality": null,
-      "recovery_delta": null,
+      "next_day_recovery": 37.0,
+      "next_day_recovery_bucket": "optimal",
+      "next_day_hrv": 67.41205,
+      "next_day_resting_hr": 50.0,
+      "next_day_sleep_performance": 68.0,
+      "next_day_sleep_hours": 5.67,
+      "next_day_sleep_quality": "fair",
+      "recovery_delta": -3.0,
       "loaded_at": "2026-07-17 07:48:48.889732+00"
     },
     {
