@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-19T07:55:10.830890+00:00",
+  "generated_at": "2026-07-20T08:34:44.295467+00:00",
   "run_count": 20,
   "runs": [
     {
@@ -18,19 +18,19 @@
       "average_cadence": null,
       "suffer_score": null,
       "summary_polyline": "_}paGhx}pLh@_At@c@AIDIEMT[J]BELCBMNOHO@ULK@Q\\k@J[AQHSKKAOGQGIAKMg@MY?GZ{@NIN_@^i@DS^e@Vu@HMHIDUFGJLBAGIEAAGCD@@@EEIEy@bAoBT[FW?OXWPWH[P[h@i@FODA\\[HMLGXWd@[NQJED?BEVKJANIFAFGVGJIFAB@JANSLGh@OHIH@n@UHMp@YLKHSIa@a@oA]wAoAqGIUkAcEMo@UqA[uACEGYa@uASeAk@}B{AeH[eA[uAOo@Iw@K_@[cBw@aDOQKDIGIw@KSWW@OCi@Oc@QgAAWMe@C]GSGKOKKQMMEOOIK?EIVwFHeDVkHAYDMDkAJ_EBK?UDq@@iALkCFeCZqDBRET@h@FNLHPDFHh@zBLZDHTHLAJCJQHURWTIR@j@`@X^HNLLPB\\LVBj@VH?XFBBr@NvBx@DFDNB`@HRTTd@PFHBN@h@Ar@Fr@Np@LH\\`@t@|@`@r@\\hALx@J\\b@pCDHDd@XhANVDRjC~Nl@vA@JA`@HdAFVPlAZrADd@VlAB`@f@fCL^LTJJ\\Pb@?TGDGH?PNFTBr@^`@JRb@tBB`@L^JNHTLlALl@ARDVB`AHp@DNJ~APpEFb@GLc@LGHBHD@h@UF?BNA@YFg@P_@PeE~AULOBEDQDcAb@a@LuAj@G?KHOB{B~@w@Tm@XsAd@uAl@QDS@QDMJWFIAMLWPE?]Jm@VUBGBC?EFE?SJe@N_@TQ@GFG@OHC?GDk@j@EJYROTUFIPKHW`@i@|@ADQXIVs@nAa@|@MPMLCRHX@ZBNO\\EBEJa@h@@FM^IFa@z@E@K\\GDWj@MJCL?PJNFZJXDRL\\Cn@CNONIVQRENIFGJWXCHQJEPE@MNG?IHGXKJIXCZEAKPW~@g@~@Od@",
-      "same_day_strain": 15.051555,
-      "same_day_avg_hr": 62,
+      "same_day_strain": 15.051298,
+      "same_day_avg_hr": 64,
       "same_day_recovery": 62.0,
       "same_day_recovery_bucket": "optimal",
       "same_day_hrv": 77.46418,
-      "next_day_recovery": null,
-      "next_day_recovery_bucket": null,
-      "next_day_hrv": null,
-      "next_day_resting_hr": null,
-      "next_day_sleep_performance": null,
-      "next_day_sleep_hours": null,
-      "next_day_sleep_quality": null,
-      "recovery_delta": null,
+      "next_day_recovery": 68.0,
+      "next_day_recovery_bucket": "peak",
+      "next_day_hrv": 85.565956,
+      "next_day_resting_hr": 47.0,
+      "next_day_sleep_performance": 82.0,
+      "next_day_sleep_hours": 7.45,
+      "next_day_sleep_quality": "good",
+      "recovery_delta": 6.0,
       "loaded_at": "2026-07-19 07:53:55.653228+00"
     },
     {
