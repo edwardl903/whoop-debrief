@@ -58,7 +58,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 | Pipeline schedule | GitHub Actions, 06:00 UTC daily |
 | Auth | WHOOP OAuth 2.0; tokens in `.env` (gitignored) |
 | Python version | 3.13 |
-| Status | Pipeline complete: ingest (WHOOP + Strava), dbt (11 models, 34 tests), CI, dbt docs on Pages, route maps. Serve layer pending. |
+| Status | Pipeline complete: ingest (WHOOP + Strava + profile), dbt (15 models), CI, dbt docs on Pages, route maps. Serve layer pending. |
 
 ---
 
@@ -81,6 +81,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 
 | Date | Change |
 |------|--------|
+| 2026-07-23 | fct_workouts (int_workout_recovery + mart); profile ingest (raw_users, stg_raw_users, dim_user join); surface sleep-need/altitude raw fields; WHOOP workout match in int_run_recovery/fct_runs; full schema.yml + mental-model update |
 | 2026-07-09 | Route maps: summary_polyline through to fct_runs; scripts/generate_route_maps.py (folium); dbt docs on GitHub Pages; dbt source freshness in CI; docs sweep |
 | 2026-07-09 | Strava integration: utils/strava_client.py, scripts/fetch_strava.py, stg_strava_runs, int_run_recovery, fct_runs; 81 tests pass |
 | 2026-07-09 | dbt layer complete: 4 staging models, int_daily_metrics, fct_daily (incremental), dim_user, my_trends + full schema.yml tests + sources.yml freshness |

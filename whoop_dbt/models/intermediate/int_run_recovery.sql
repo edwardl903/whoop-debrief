@@ -3,7 +3,12 @@
 --   same_day:  cycle_date == run_date  (strain context for the run day)
 --   next_day:  cycle_date == run_date + 1  (recovery impact the morning after)
 --
--- Both joins are LEFT so runs with no WHOOP data still appear.
+-- Also matches each Strava run to the closest WHOOP-tracked running workout
+-- on the same day by start-time proximity (QUALIFY ROW_NUMBER). The match
+-- surfaces WHOOP's own HR zones and strain for the same activity, bridging
+-- Strava GPS data with WHOOP physiological data.
+--
+-- All joins are LEFT so runs with no WHOOP data still appear.
 -- Grain: one row per run_id.
 
 with runs as (
@@ -44,6 +49,35 @@ next_day as (
     from runs
     left join daily
         on date_add(runs.run_date, interval 1 day) = daily.cycle_date
+),
+
+-- Match each Strava run to the closest WHOOP running workout on the same day.
+-- When multiple running workouts exist on the same day, QUALIFY picks the one
+-- whose start time is nearest to the Strava run start (smallest minute diff).
+-- When no WHOOP workout matches, all whoop_workout_* columns are null.
+whoop_workout as (
+    select
+        r.run_id,
+        w.workout_id                                                as whoop_workout_id,
+        w.sport_name                                                as whoop_sport_name,
+        w.strain_score                                              as whoop_workout_strain,
+        w.avg_heart_rate                                            as whoop_workout_avg_hr,
+        w.max_heart_rate                                            as whoop_workout_max_hr,
+        w.distance_meter                                            as whoop_workout_distance_meter,
+        w.zone_3_min                                                as whoop_zone_3_min,
+        w.zone_4_min                                                as whoop_zone_4_min,
+        w.zone_5_min                                                as whoop_zone_5_min,
+        coalesce(w.zone_3_min, 0)
+            + coalesce(w.zone_4_min, 0)
+            + coalesce(w.zone_5_min, 0)                            as whoop_high_intensity_min
+    from runs r
+    left join {{ ref('stg_raw_workouts') }} w
+        on r.run_date = w.workout_date
+        and lower(w.sport_name) like '%run%'
+    qualify row_number() over (
+        partition by r.run_id
+        order by abs(timestamp_diff(r.run_start, w.workout_start, minute))
+    ) = 1
 )
 
 select
@@ -87,8 +121,18 @@ select
     -- Derived: did recovery go up or down after this run?
     nd.next_day_recovery - sd.same_day_recovery             as recovery_delta,
 
+    -- Matched WHOOP workout (same-day running activity by start-time proximity)
+    ww.whoop_workout_id,
+    ww.whoop_sport_name,
+    ww.whoop_workout_strain,
+    ww.whoop_workout_avg_hr,
+    ww.whoop_workout_max_hr,
+    ww.whoop_workout_distance_meter,
+    ww.whoop_high_intensity_min,
+
     r.loaded_at
 
 from runs r
 left join same_day sd using (run_id)
 left join next_day nd using (run_id)
+left join whoop_workout ww using (run_id)

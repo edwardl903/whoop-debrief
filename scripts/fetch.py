@@ -42,8 +42,9 @@ _ENDPOINTS: dict[str, tuple[str, str, str]] = {
     "workouts": ("get_workouts", "raw_workouts", "end"),
 }
 
-# All BigQuery tables managed by this script (raw data + audit log)
-_ALL_TABLES = [table for _, table, _ in _ENDPOINTS.values()] + ["pipeline_runs"]
+# All BigQuery tables managed by this script (raw data + audit log).
+# raw_users is not in _ENDPOINTS (single call, no watermark) but still needs ensure_table.
+_ALL_TABLES = [table for _, table, _ in _ENDPOINTS.values()] + ["pipeline_runs", "raw_users"]
 
 
 # ---------------------------------------------------------------------------
@@ -181,6 +182,36 @@ def _utcnow() -> datetime:
     return datetime.now(tz=timezone.utc)
 
 
+def ingest_user_profile(
+    whoop: WhoopClient,
+    bq: BigQueryClient,
+    dataset_raw: str,
+    dry_run: bool,
+) -> None:
+    """Fetch the user's basic profile and append one snapshot row to raw_users.
+
+    Profile rarely changes, but we insert on every run so the staging model
+    can always dedup to the freshest snapshot. No watermark needed.
+    """
+    profile = whoop.get_user_profile()
+    loaded_at = _utcnow().isoformat()
+    row: dict[str, Any] = {
+        "user_id": profile.get("user_id"),
+        "email": profile.get("email"),
+        "first_name": profile.get("first_name"),
+        "last_name": profile.get("last_name"),
+        "loaded_at": loaded_at,
+    }
+    if dry_run:
+        logger.info(
+            "Dry run: skipping raw_users insert",
+            extra={"user_id": row["user_id"]},
+        )
+    else:
+        bq.insert_rows(dataset_raw, "raw_users", [row])
+        logger.info("User profile inserted", extra={"user_id": row["user_id"]})
+
+
 def ingest_endpoint(
     endpoint: str,
     whoop: WhoopClient,
@@ -288,6 +319,15 @@ def main(argv: list[str] | None = None) -> int:
     bq.ensure_dataset(config.bq_dataset_raw)
     for table_name in _ALL_TABLES:
         bq.ensure_table(config.bq_dataset_raw, table_name)
+
+    # User profile: always fetch on a full run (not filterable by --endpoint).
+    # Runs before the incremental endpoints so the user row exists in BigQuery
+    # before dbt staging references it.
+    if not args.endpoint:
+        try:
+            ingest_user_profile(whoop, bq, config.bq_dataset_raw, args.dry_run)
+        except Exception:
+            logger.exception("User profile ingest failed; continuing with other endpoints")
 
     endpoints_to_run = [args.endpoint] if args.endpoint else list(_ENDPOINTS.keys())
 

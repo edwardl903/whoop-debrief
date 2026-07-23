@@ -1,6 +1,6 @@
 -- Dimension: dim_user
--- Full table rebuild on every run. One row per user with lifetime aggregates
--- and peak scores across all tracked days.
+-- Full table rebuild on every run. One row per user with lifetime aggregates,
+-- peak scores, and basic profile info (name, email from raw_users).
 -- Grain: one row per user_id.
 
 {{
@@ -45,9 +45,22 @@ aggregated as (
         round(max(hrv_rmssd_milli), 1)          as peak_hrv_rmssd_milli
     from base
     group by 1
+),
+
+profile as (
+    select
+        user_id,
+        first_name,
+        last_name,
+        email
+    from {{ ref('stg_raw_users') }}
 )
 
 select
     a.*,
+    p.first_name,
+    p.last_name,
+    p.email,
     current_timestamp()     as dbt_updated_at
 from aggregated a
+left join profile p using (user_id)

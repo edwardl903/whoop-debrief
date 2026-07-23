@@ -23,6 +23,8 @@ deduped as (
         score.kilojoule                                             as kilojoule,
         safe_divide(score.percent_recorded, 100.0)                  as pct_recorded,
         score.distance_meter                                        as distance_meter,
+        score.altitude_gain_meter                                   as altitude_gain_meter,
+        score.altitude_change_meter                                 as altitude_change_meter,
 
         -- HR zone durations: milliseconds → minutes
         safe_divide(score.zone_duration.zone_zero_milli, 60000.0)   as zone_0_min,

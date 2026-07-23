@@ -27,9 +27,14 @@ deduped as (
         score.stage_summary.sleep_cycle_count                                       as sleep_cycle_count,
         score.stage_summary.disturbance_count                                       as disturbance_count,
 
-        -- Sleep need: milliseconds → hours
+        -- No-data time (band off or poor contact): milliseconds → hours
+        safe_divide(score.stage_summary.total_no_data_time_milli, 3600000.0)       as no_data_hours,
+
+        -- Sleep need: milliseconds → hours (all four components)
         safe_divide(score.sleep_needed.baseline_milli, 3600000.0)                  as sleep_needed_baseline_hours,
         safe_divide(score.sleep_needed.need_from_sleep_debt_milli, 3600000.0)      as sleep_need_from_debt_hours,
+        safe_divide(score.sleep_needed.need_from_recent_strain_milli, 3600000.0)   as sleep_need_from_strain_hours,
+        safe_divide(score.sleep_needed.need_from_recent_nap_milli, 3600000.0)      as sleep_need_from_nap_hours,
 
         -- Quality metrics (already percentages 0-100)
         score.respiratory_rate                                                      as respiratory_rate,

@@ -99,6 +99,23 @@ sources:
           - name: loaded_at
             description: Timestamp when the row was inserted by the pipeline.
 
+      - name: raw_users
+        description: >
+          One row per pipeline run containing the authenticated user's basic profile
+          (name, email). Written by scripts/fetch.py on every full run. The staging
+          model deduplicates to the latest snapshot per user_id.
+        columns:
+          - name: user_id
+            description: WHOOP user ID (integer).
+          - name: email
+            description: User's email address.
+          - name: first_name
+            description: User's first name.
+          - name: last_name
+            description: User's last name.
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.
+
       - name: raw_strava_runs
         description: >
           One row per Strava run (sport_type in Run / TrailRun / VirtualRun).

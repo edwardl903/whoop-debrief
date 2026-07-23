@@ -25,16 +25,17 @@ WHOOP API (OAuth 2.0)         BigQuery                  (planned)
   /v2/activity/sleep            raw_cycles
   /v2/recovery       ──────►    raw_sleeps       ──────► dbt run
   /v2/activity/workout          raw_recoveries              │
-        │                       raw_workouts           stg_* (views)
-        ▼                                                   │
-  scripts/fetch.py                                   int_daily_metrics
-        │                   Strava API (OAuth 2.0)   int_run_recovery
+  /v2/user/profile/basic        raw_workouts           stg_* (views)
+        │                       raw_users                   │
+        ▼                                             int_daily_metrics
+  scripts/fetch.py                                   int_run_recovery (+ WHOOP workout match)
+        │                   Strava API (OAuth 2.0)   int_workout_recovery
         │                   /v3/athlete/activities        │
         │                          │                      ├── fct_daily (incremental)
-        │                          ▼                      ├── fct_runs (incremental)
-        │                   scripts/fetch_strava.py       ├── dim_user (table)
-        │                          │                      └── my_trends (table)
-        ▼                          ▼
+        │                          ▼                      ├── fct_runs (incremental, WHOOP match)
+        │                   scripts/fetch_strava.py       ├── fct_workouts (incremental)
+        │                          │                      ├── dim_user (table, +profile)
+        ▼                          ▼                      └── my_trends (table)
   GitHub Actions            raw_strava_runs
   cron 06:00 UTC            pipeline_runs (audit log)
   ingest job
@@ -53,9 +54,10 @@ WHOOP API (OAuth 2.0)         BigQuery                  (planned)
 | Endpoint | What it returns | Raw table |
 |----------|----------------|-----------|
 | `GET /v2/cycle` | Daily strain cycle (start/end, strain score, calories, avg/max HR) | `raw_cycles` |
-| `GET /v2/activity/sleep` | Sleep record (stages, efficiency, respiratory rate, duration) | `raw_sleeps` |
+| `GET /v2/activity/sleep` | Sleep record (stages, efficiency, respiratory rate, all sleep-need components) | `raw_sleeps` |
 | `GET /v2/recovery` | Recovery score (%, HRV, resting HR, SpO2, skin temp) | `raw_recoveries` |
-| `GET /v2/activity/workout` | Workout (sport type, duration, strain, HR zones) | `raw_workouts` |
+| `GET /v2/activity/workout` | Workout (sport type, duration, strain, HR zones, altitude) | `raw_workouts` |
+| `GET /v2/user/profile/basic` | User name and email (one snapshot per daily run) | `raw_users` |
 
 All endpoints support `start` / `end` date params for incremental fetch.
 
@@ -80,31 +82,37 @@ SOURCE (WHOOP)                   SOURCE (Strava)
 whoop_raw.raw_cycles             whoop_raw.raw_strava_runs
 whoop_raw.raw_sleeps                     │
 whoop_raw.raw_recoveries                 │
-whoop_raw.raw_workouts                   │
+whoop_raw.raw_workouts ──────────────────┤ (workout match)
+whoop_raw.raw_users                      │
         │                                │
         ▼  STAGING (views)               ▼  STAGING (view)
 stg_raw_cycles               stg_strava_runs
 stg_raw_sleeps                 pace, distance_km,
 stg_raw_recoveries             speed conversions,
-stg_raw_workouts               summary_polyline
+stg_raw_workouts ────────────► summary_polyline
+stg_raw_users                            │
         │                                │
-        ▼  INTERMEDIATE (table)          │
+        ▼  INTERMEDIATE                  │
 int_daily_metrics  ◄─────────────────────┤
   cycle + recovery + sleep               │
   recovery_bucket + sleep_quality_label  │
         │                                │
-        │              ◄─── int_run_recovery (table)
+        │              ◄─── int_run_recovery
         │                    run + same-day WHOOP
         │                    + next-day recovery
+        │                    + matched WHOOP workout
         │                    recovery_delta derived
         │                    summary_polyline
         │
-        ├────────────────┬──────────────────────┐
-        ▼                ▼                      ▼
-MARTS (incremental)  DIMENSION (full)      MART (incremental)
-fct_daily            dim_user              fct_runs
-  grain: date          1 row/user            grain: run_id
-        │             averages+peaks         GPS polyline
+        │        int_workout_recovery
+        │          workout + next-day recovery
+        │
+        ├────────────────┬──────────────────────┬──────────────────┐
+        ▼                ▼                      ▼                  ▼
+MARTS (incremental)  DIMENSION (full)      MART (incremental)  MART (incremental)
+fct_daily            dim_user              fct_runs            fct_workouts
+  grain: date          1 row/user            grain: run_id       grain: workout_id
+        │             stats+peaks+profile    GPS polyline        next-day recovery
         ▼
 my_trends (full rebuild)
   7d/28d rolling averages
@@ -121,13 +129,16 @@ my_trends (full rebuild)
 | BigQuery | `whoop_raw.raw_sleeps` | scripts/fetch.py | dbt staging |
 | BigQuery | `whoop_raw.raw_recoveries` | scripts/fetch.py | dbt staging |
 | BigQuery | `whoop_raw.raw_workouts` | scripts/fetch.py | dbt staging |
+| BigQuery | `whoop_raw.raw_users` | scripts/fetch.py (profile) | dbt staging |
 | BigQuery | `whoop_raw.raw_strava_runs` | scripts/fetch_strava.py | dbt staging |
 | BigQuery | `whoop_raw.pipeline_runs` | fetch.py, fetch_strava.py | audit log |
 | BigQuery | `whoop_dbt.stg_*` | dbt | dbt intermediate |
 | BigQuery | `whoop_dbt.int_daily_metrics` | dbt | dbt marts |
 | BigQuery | `whoop_dbt.int_run_recovery` | dbt | dbt marts |
+| BigQuery | `whoop_dbt.int_workout_recovery` | dbt | dbt marts |
 | BigQuery | `whoop_dbt.fct_daily` | dbt | serve layer |
 | BigQuery | `whoop_dbt.fct_runs` | dbt | serve layer, route maps |
+| BigQuery | `whoop_dbt.fct_workouts` | dbt | serve layer |
 | BigQuery | `whoop_dbt.dim_user` | dbt | serve layer |
 | BigQuery | `whoop_dbt.my_trends` | dbt | serve layer |
 | Local `output/maps/` | HTML files | scripts/generate_route_maps.py | browser |
@@ -186,6 +197,7 @@ my_trends (full rebuild)
 | Issue | Priority | Notes |
 |-------|----------|-------|
 | Serve layer undefined | High | Deciding between Streamlit and a custom approach; Looker Studio ruled out |
+| Nap modeling | Low | Naps in raw_sleeps and stg_raw_sleeps; not surfaced in fct_daily (could add nap rollup columns) |
 | Repo rename | Low | GitHub Settings → rename `whoop-analytics` → `whoop-debrief`, then update URLs in README, dbt-docs.yml, portfolio-story.md (search `whoop-analytics` across docs after rename) |
 
 ### Resolved
@@ -213,4 +225,4 @@ my_trends (full rebuild)
 
 ---
 
-*Last updated: 2026-07-09 — route maps, dbt docs on Pages, CI freshness check*
+*Last updated: 2026-07-23 — fct_workouts, profile ingest, raw field surfacing, WHOOP workout match in fct_runs*

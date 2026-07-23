@@ -39,13 +39,20 @@ models:
   - name: dim_user
     description: >
       One row per user. Full rebuild on every run. Contains lifetime aggregates
-      (averages and peaks) for recovery, strain, sleep, and HRV.
+      (averages and peaks) for recovery, strain, sleep, and HRV, plus basic
+      profile info (name, email) joined from stg_raw_users.
     columns:
       - name: user_id
         description: WHOOP user ID (primary key).
         tests:
           - not_null
           - unique
+      - name: first_name
+        description: User's first name (from WHOOP profile API). Null until profile ingest runs.
+      - name: last_name
+        description: User's last name.
+      - name: email
+        description: User's email address.
       - name: total_tracked_days
         description: Number of days with a scored recovery.
       - name: first_tracked_date
@@ -104,6 +111,67 @@ models:
           to render HTML maps from this column.
       - name: recovery_delta
         description: next_day_recovery minus same_day_recovery.
+      - name: whoop_workout_id
+        description: WHOOP workout UUID matched to this run by date and start-time proximity. Null if no WHOOP running workout found.
+      - name: whoop_sport_name
+        description: WHOOP sport name for the matched workout.
+      - name: whoop_workout_strain
+        description: WHOOP workout strain score for the matched activity.
+      - name: whoop_workout_avg_hr
+        description: WHOOP average heart rate for the matched workout.
+      - name: whoop_high_intensity_min
+        description: Minutes in HR zones 3-5 during the matched WHOOP workout.
+      - name: dbt_updated_at
+        description: Timestamp of the last dbt run that touched this row.
+
+  - name: fct_workouts
+    description: >
+      Incremental fact table with one row per WHOOP workout. Merges on workout_id;
+      re-scans last 7 days to catch WHOOP rescores. Contains full workout metrics
+      (sport, HR, zones, distance, altitude) plus next-day recovery context.
+      Completes the WHOOP data story alongside fct_daily (day-level) and fct_runs (GPS runs).
+    columns:
+      - name: workout_id
+        description: WHOOP workout UUID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: workout_date
+        description: Calendar date of the workout start (UTC).
+        tests:
+          - not_null
+      - name: sport_name
+        description: Human-readable sport name from WHOOP (e.g. "Running", "Cycling").
+      - name: strain_score
+        description: Workout strain score (0-21).
+      - name: avg_heart_rate
+        description: Average heart rate during the workout (bpm).
+      - name: max_heart_rate
+        description: Peak heart rate during the workout (bpm).
+      - name: kilojoule
+        description: Energy expenditure in kilojoules.
+      - name: pct_recorded
+        description: Fraction of the workout with HR data (0-1). Filter >= 0.9 for reliable metrics.
+      - name: distance_meter
+        description: Distance covered in meters (null for non-distance sports).
+      - name: altitude_gain_meter
+        description: Total elevation gain in meters.
+      - name: high_intensity_min
+        description: Minutes in HR zones 3 + 4 + 5 (above ~70% max HR). Proxy for workout quality.
+      - name: next_day_recovery
+        description: WHOOP recovery score the morning after the workout.
+      - name: next_day_recovery_bucket
+        description: "'peak', 'optimal', or 'poor' the morning after."
+      - name: next_day_hrv
+        description: HRV RMSSD (ms) the morning after.
+      - name: next_day_sleep_hours
+        description: Net sleep hours the night following the workout.
+      - name: next_day_sleep_quality
+        description: "'excellent', 'good', 'fair', or 'poor' the night following."
       - name: dbt_updated_at
         description: Timestamp of the last dbt run that touched this row.
 

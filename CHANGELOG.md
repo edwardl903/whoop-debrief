@@ -9,6 +9,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.5.0] — 2026-07-23 — fct_workouts, profile ingest, raw field surfacing, WHOOP/Strava workout match
+
+### Added
+
+- `whoop_dbt/models/intermediate/int_workout_recovery.sql` — joins each WHOOP workout
+  to next-day WHOOP recovery metrics (same pattern as int_run_recovery). Derives
+  `high_intensity_min` (zones 3+4+5). Grain: one row per workout_id.
+- `whoop_dbt/models/marts/fct_workouts.sql` — incremental mart on workout_id;
+  7-day rescan window for rescores. Surfaces sport, HR, zones, distance, altitude,
+  and next-day recovery context. Completes the four-way WHOOP story alongside
+  fct_daily, fct_runs, and dim_user.
+- `whoop_dbt/models/staging/stg_raw_users.sql` — deduplicates raw_users profile
+  snapshots to latest per user_id. Read by dim_user.
+- `scripts/fetch.py` — `ingest_user_profile()` function: calls
+  `WhoopClient.get_user_profile()`, inserts one snapshot row to `raw_users` on
+  every full pipeline run. Added `raw_users` to `_ALL_TABLES` so the table is
+  created on first run.
+- `whoop_dbt/models/staging/sources.yml` — added `raw_users` source table with
+  column descriptions.
+
+### Changed
+
+- `whoop_dbt/models/intermediate/int_run_recovery.sql` — added `whoop_workout` CTE:
+  left-joins each Strava run to the closest WHOOP running workout on the same day
+  (matched by minimum start-time difference via QUALIFY ROW_NUMBER). Adds
+  `whoop_workout_id`, `whoop_workout_strain`, `whoop_workout_avg_hr`,
+  `whoop_workout_max_hr`, `whoop_workout_distance_meter`, `whoop_high_intensity_min`
+  to the output; flows through to `fct_runs` via `select *`.
+- `whoop_dbt/models/marts/dim_user.sql` — added `profile` CTE joining `stg_raw_users`;
+  surfaces `first_name`, `last_name`, `email` alongside lifetime aggregates.
+- `whoop_dbt/models/staging/stg_raw_sleeps.sql` — added three previously dropped
+  fields: `sleep_need_from_strain_hours`, `sleep_need_from_nap_hours`, `no_data_hours`.
+- `whoop_dbt/models/staging/stg_raw_workouts.sql` — added `altitude_gain_meter` and
+  `altitude_change_meter` (previously in raw schema but not surfaced in staging).
+- All `schema.yml` files updated with column docs for every new field and model.
+- `docs/mental-model.md` — updated pipeline diagram, data sources table, lineage
+  diagram, and "where data lives" table for all new models.
+
+---
+
 ## [0.4.0] — 2026-07-09 — Route maps, dbt docs on Pages, CI tightening
 
 ### Added

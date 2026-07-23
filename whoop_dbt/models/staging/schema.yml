@@ -76,6 +76,12 @@ models:
         description: Baseline sleep need (hours).
       - name: sleep_need_from_debt_hours
         description: Extra sleep needed due to accumulated sleep debt (hours).
+      - name: sleep_need_from_strain_hours
+        description: Extra sleep needed due to recent training load (hours).
+      - name: sleep_need_from_nap_hours
+        description: Sleep need adjustment from recent naps; negative means nap reduced the need (hours).
+      - name: no_data_hours
+        description: Time with no sensor data during the sleep period (band off or poor contact, hours).
       - name: respiratory_rate
         description: Average respiratory rate during sleep (breaths/min).
       - name: sleep_performance_pct
@@ -146,6 +152,10 @@ models:
         description: Calories burned in kilojoules.
       - name: distance_meter
         description: Distance covered in meters (null for non-distance sports).
+      - name: altitude_gain_meter
+        description: Total elevation gain in meters (null for activities without altitude tracking).
+      - name: altitude_change_meter
+        description: Net altitude change from start to end in meters (positive = net uphill).
       - name: zone_0_min
         description: Time in HR zone 0 (very light, < 50% max HR) in minutes.
       - name: zone_1_min
@@ -202,5 +212,26 @@ models:
         description: Average cadence in steps/min (null if no sensor).
       - name: suffer_score
         description: Strava suffer score (relative effort).
+      - name: loaded_at
+        description: Pipeline insertion timestamp (watermark column).
+
+  - name: stg_raw_users
+    description: >
+      Deduplicated user profile snapshots. The pipeline inserts one row per daily
+      run; this model keeps only the latest snapshot per user_id. Joined into
+      dim_user to surface name and email alongside lifetime aggregates.
+      Grain: one row per user_id (most recently loaded snapshot).
+    columns:
+      - name: user_id
+        description: WHOOP user ID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: email
+        description: User's email address (from WHOOP profile).
+      - name: first_name
+        description: User's first name.
+      - name: last_name
+        description: User's last name.
       - name: loaded_at
         description: Pipeline insertion timestamp (watermark column).

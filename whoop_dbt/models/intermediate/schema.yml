@@ -84,3 +84,75 @@ models:
         description: >
           next_day_recovery minus same_day_recovery. Positive = recovery improved
           after the run; negative = recovery declined. Null if either day lacks data.
+      - name: whoop_workout_id
+        description: >
+          UUID of the closest WHOOP-tracked running workout on the same day (matched
+          by minimum start-time difference). Null if WHOOP has no running activity
+          recorded for that day.
+      - name: whoop_sport_name
+        description: WHOOP sport name for the matched workout (e.g. "Running", "Trail Running").
+      - name: whoop_workout_strain
+        description: WHOOP workout strain score (0-21) for the matched activity.
+      - name: whoop_workout_avg_hr
+        description: Average heart rate during the matched WHOOP workout (bpm).
+      - name: whoop_workout_max_hr
+        description: Peak heart rate during the matched WHOOP workout (bpm).
+      - name: whoop_workout_distance_meter
+        description: Distance recorded by WHOOP for the matched workout (meters). Often less precise than Strava GPS.
+      - name: whoop_high_intensity_min
+        description: Minutes in HR zones 3 + 4 + 5 during the matched WHOOP workout (above ~70% max HR).
+
+  - name: int_workout_recovery
+    description: >
+      One row per WHOOP workout. Joins each workout to the next-day WHOOP recovery
+      metrics, answering: "how did this workout affect my recovery the morning after?"
+      Left join means workouts with no next-day data still appear (fields null).
+      Grain: one row per workout_id.
+    columns:
+      - name: workout_id
+        description: WHOOP workout UUID (primary key).
+        tests:
+          - not_null
+          - unique
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: workout_date
+        description: Calendar date of the workout start (UTC).
+        tests:
+          - not_null
+      - name: sport_name
+        description: Human-readable sport name (e.g. "Running", "Cycling").
+      - name: strain_score
+        description: Workout strain score (0-21).
+      - name: avg_heart_rate
+        description: Average heart rate during the workout (bpm).
+      - name: max_heart_rate
+        description: Peak heart rate during the workout (bpm).
+      - name: kilojoule
+        description: Calories burned in kilojoules.
+      - name: pct_recorded
+        description: Fraction of the workout with heart rate data (0-1).
+      - name: distance_meter
+        description: Distance covered in meters (null for non-distance sports).
+      - name: altitude_gain_meter
+        description: Total elevation gain in meters.
+      - name: altitude_change_meter
+        description: Net altitude change start to end (meters).
+      - name: high_intensity_min
+        description: Total minutes in HR zones 3 + 4 + 5 (above ~70% max HR).
+      - name: next_day_recovery
+        description: WHOOP recovery score the morning after the workout.
+      - name: next_day_recovery_bucket
+        description: "'peak', 'optimal', or 'poor' the morning after."
+      - name: next_day_hrv
+        description: HRV RMSSD (ms) the morning after the workout.
+      - name: next_day_resting_hr
+        description: Resting heart rate (bpm) the morning after.
+      - name: next_day_sleep_performance
+        description: Sleep performance percentage the night following the workout.
+      - name: next_day_sleep_hours
+        description: Net sleep hours the night following the workout.
+      - name: next_day_sleep_quality
+        description: "'excellent', 'good', 'fair', or 'poor' the night following the workout."
