@@ -43,10 +43,12 @@ models:
   - name: int_run_recovery
     description: >
       One row per Strava run. Joins each run to WHOOP daily metrics for
-      the same day (strain context) and the next day (recovery impact).
+      the same day (strain, recovery, and sleep from the night before the run)
+      and the next day (recovery impact and sleep the night after the run).
       Both joins are left joins: runs without WHOOP data still appear.
-      Key analytical question answered: "did my recovery go up or down
-      after this run?" via the recovery_delta derived column.
+      Key analytical questions: "how rested were you going into this run?"
+      (same_day_sleep_*) and "did recovery go up or down after this run?"
+      (recovery_delta, next_day_*).
     columns:
       - name: run_id
         description: Strava run ID (primary key).
@@ -66,9 +68,17 @@ models:
       - name: same_day_strain
         description: WHOOP day strain on the run day (null if no WHOOP data).
       - name: same_day_recovery
-        description: WHOOP recovery score on the run day.
+        description: WHOOP recovery score on the run day (reflects the night-before sleep).
       - name: same_day_recovery_bucket
         description: "'peak', 'optimal', or 'poor' on the run day."
+      - name: same_day_sleep_performance
+        description: >
+          Sleep performance percentage for the night before the run (0-100).
+          Same cycle as same_day_recovery; answers "how rested were you going into this run?"
+      - name: same_day_sleep_hours
+        description: Net sleep hours the night before the run (in_bed minus awake).
+      - name: same_day_sleep_quality
+        description: "'excellent', 'good', 'fair', or 'poor' for the night before the run."
       - name: next_day_recovery
         description: WHOOP recovery score the morning after the run.
       - name: next_day_recovery_bucket

@@ -28,7 +28,12 @@ same_day as (
         cycle_avg_heart_rate        as same_day_avg_hr,
         recovery_score              as same_day_recovery,
         recovery_bucket             as same_day_recovery_bucket,
-        hrv_rmssd_milli             as same_day_hrv
+        hrv_rmssd_milli             as same_day_hrv,
+        -- Sleep from the night BEFORE the run (same cycle = the sleep you woke
+        -- up from on run day; answers "how rested were you going into this run?")
+        sleep_performance_pct       as same_day_sleep_performance,
+        total_sleep_hours           as same_day_sleep_hours,
+        sleep_quality_label         as same_day_sleep_quality
     from runs
     left join daily
         on runs.run_date = daily.cycle_date
@@ -107,6 +112,10 @@ select
     sd.same_day_recovery,
     sd.same_day_recovery_bucket,
     sd.same_day_hrv,
+    -- Sleep the night before the run
+    sd.same_day_sleep_performance,
+    sd.same_day_sleep_hours,
+    sd.same_day_sleep_quality,
 
     -- WHOOP recovery the morning after
     nd.next_day_cycle_id,

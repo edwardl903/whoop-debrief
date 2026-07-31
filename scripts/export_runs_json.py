@@ -52,6 +52,9 @@ SELECT
     same_day_recovery,
     same_day_recovery_bucket,
     same_day_hrv,
+    same_day_sleep_performance,
+    same_day_sleep_hours,
+    same_day_sleep_quality,
 
     next_day_recovery,
     next_day_recovery_bucket,
