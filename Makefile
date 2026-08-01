@@ -1,4 +1,4 @@
-.PHONY: install auth strava-auth fetch fetch-strava fetch-all backfill-photos reset-tables route-maps export-runs dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
+.PHONY: install auth strava-auth fetch fetch-strava fetch-all backfill-photos reset-tables route-maps export-runs run-replay dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
 
 # Always python3.13 — dbt does not support 3.14. Install deps with `make install`
 # (not plain `pip install` in a 3.14 venv, or Makefile targets won't see them).
@@ -45,6 +45,10 @@ route-maps:
 # Export int_run_recovery → data/runs.json for the portfolio static serve layer
 export-runs:
 	$(PYTHON) scripts/export_runs_json.py
+
+# Generate animated multi-run replay viewer (reads data/runs.json, no BigQuery needed)
+run-replay:
+	$(PYTHON) scripts/generate_run_replay.py $(ARGS)
 
 # dbt pipeline (--profiles-dir . picks up whoop_dbt/profiles.yml for local dev)
 dbt-deps:

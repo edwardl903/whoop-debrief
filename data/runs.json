@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-01T07:58:40.911194+00:00",
+  "generated_at": "2026-08-01T14:49:38.914876+00:00",
   "run_count": 26,
   "runs": [
     {
@@ -34,6 +34,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-31 08:27:17.500737+00"
     },
     {
@@ -68,6 +69,7 @@
       "next_day_sleep_hours": 8.52,
       "next_day_sleep_quality": "excellent",
       "recovery_delta": -5.0,
+      "primary_photo_url": "https://dgtzuqphqg23d.cloudfront.net/OJjIZEKX3sfWaHZ2Hz3c0-7dKaM8sj6353OrfiO7ooI-768x576.jpg",
       "loaded_at": "2026-07-31 08:27:17.500737+00"
     },
     {
@@ -102,6 +104,7 @@
       "next_day_sleep_hours": 8.18,
       "next_day_sleep_quality": "good",
       "recovery_delta": -33.0,
+      "primary_photo_url": "https://dgtzuqphqg23d.cloudfront.net/Zu48k-kPuPfUh1Ut7Yudn8ya6_Oeavc7cQv4LhisjuY-768x576.jpg",
       "loaded_at": "2026-07-30 08:02:35.265656+00"
     },
     {
@@ -136,6 +139,7 @@
       "next_day_sleep_hours": 5.73,
       "next_day_sleep_quality": "fair",
       "recovery_delta": -13.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-25 07:47:00.962120+00"
     },
     {
@@ -170,6 +174,7 @@
       "next_day_sleep_hours": 5.62,
       "next_day_sleep_quality": "good",
       "recovery_delta": -8.0,
+      "primary_photo_url": "https://dgtzuqphqg23d.cloudfront.net/QDniaQsk7nkqBBLxlwGS1sgK6_ZlkTzXxAmW5zvnMxs-576x768.jpg",
       "loaded_at": "2026-07-23 08:06:17.177058+00"
     },
     {
@@ -204,6 +209,7 @@
       "next_day_sleep_hours": 7.91,
       "next_day_sleep_quality": "good",
       "recovery_delta": -10.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-21 08:03:20.380065+00"
     },
     {
@@ -238,6 +244,7 @@
       "next_day_sleep_hours": 7.45,
       "next_day_sleep_quality": "good",
       "recovery_delta": 6.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-19 07:53:55.653228+00"
     },
     {
@@ -272,6 +279,7 @@
       "next_day_sleep_hours": 5.67,
       "next_day_sleep_quality": "fair",
       "recovery_delta": -3.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-17 07:48:48.889732+00"
     },
     {
@@ -306,6 +314,7 @@
       "next_day_sleep_hours": 6.23,
       "next_day_sleep_quality": "good",
       "recovery_delta": -29.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-16 07:51:23.249540+00"
     },
     {
@@ -340,6 +349,7 @@
       "next_day_sleep_hours": 7.28,
       "next_day_sleep_quality": "good",
       "recovery_delta": -9.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-11 08:04:57.830619+00"
     },
     {
@@ -374,6 +384,7 @@
       "next_day_sleep_hours": 6.58,
       "next_day_sleep_quality": "good",
       "recovery_delta": -42.0,
+      "primary_photo_url": "https://dgtzuqphqg23d.cloudfront.net/crrXq0I-64zm_8MUsfFImYYTiKnvgLya-Vv1JNLR8Nc-768x534.jpg",
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -408,6 +419,7 @@
       "next_day_sleep_hours": 7.05,
       "next_day_sleep_quality": "fair",
       "recovery_delta": 35.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -442,6 +454,7 @@
       "next_day_sleep_hours": 6.68,
       "next_day_sleep_quality": "good",
       "recovery_delta": -13.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -476,6 +489,7 @@
       "next_day_sleep_hours": 6.78,
       "next_day_sleep_quality": "good",
       "recovery_delta": 30.0,
+      "primary_photo_url": "https://dgtzuqphqg23d.cloudfront.net/VwjOAhVH12h3xK5B2a_CPFG9Rw5lpDBEbcAe58FJZbg-768x534.jpg",
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -510,6 +524,7 @@
       "next_day_sleep_hours": 5.04,
       "next_day_sleep_quality": "fair",
       "recovery_delta": -64.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -544,6 +559,7 @@
       "next_day_sleep_hours": 8.58,
       "next_day_sleep_quality": "good",
       "recovery_delta": 13.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -578,6 +594,7 @@
       "next_day_sleep_hours": 7.19,
       "next_day_sleep_quality": "good",
       "recovery_delta": 21.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -612,6 +629,7 @@
       "next_day_sleep_hours": 7.02,
       "next_day_sleep_quality": "good",
       "recovery_delta": -2.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -646,6 +664,7 @@
       "next_day_sleep_hours": 7.02,
       "next_day_sleep_quality": "good",
       "recovery_delta": -2.0,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -680,6 +699,7 @@
       "next_day_sleep_hours": 6.74,
       "next_day_sleep_quality": "good",
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -714,6 +734,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -748,6 +769,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -782,6 +804,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -816,6 +839,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -850,6 +874,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     },
     {
@@ -884,6 +909,7 @@
       "next_day_sleep_hours": null,
       "next_day_sleep_quality": null,
       "recovery_delta": null,
+      "primary_photo_url": null,
       "loaded_at": "2026-07-09 15:22:18.856835+00"
     }
   ]
