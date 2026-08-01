@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -38,7 +39,7 @@ _ENDPOINTS: dict[str, tuple[str, str, str]] = {
     "runs": ("get_runs", "raw_strava_runs", "start_date"),
 }
 
-_ALL_TABLES = [table for _, table, _ in _ENDPOINTS.values()]
+_ALL_TABLES = [table for _, table, _ in _ENDPOINTS.values()] + ["raw_strava_photos"]
 
 
 # ---------------------------------------------------------------------------
@@ -74,6 +75,74 @@ def _flatten_run(r: dict[str, Any], loaded_at: str) -> dict[str, Any]:
 _FLATTENERS = {
     "runs": _flatten_run,
 }
+
+
+# ---------------------------------------------------------------------------
+# Photo sync
+# ---------------------------------------------------------------------------
+
+def sync_missing_photos(
+    strava: StravaClient,
+    bq: BigQueryClient,
+    dataset_raw: str,
+    bq_project: str,
+    dry_run: bool,
+) -> None:
+    """Fetch and store photos for Strava runs not yet in raw_strava_photos.
+
+    Compares raw_strava_runs against raw_strava_photos and fetches photos for
+    the gap. Safe to call on every pipeline run: exits immediately when no
+    runs are missing a record.
+    """
+    query = f"""
+    SELECT DISTINCT r.id
+    FROM `{bq_project}.{dataset_raw}.raw_strava_runs` r
+    LEFT JOIN `{bq_project}.{dataset_raw}.raw_strava_photos` p USING (id)
+    WHERE p.id IS NULL
+    ORDER BY r.id
+    """
+    missing = list(bq._client.query(query).result())
+    run_ids = [row["id"] for row in missing]
+
+    if not run_ids:
+        logger.info("All runs have photo records; skipping photo sync")
+        return
+
+    logger.info("Syncing photos for runs missing records", extra={"count": len(run_ids)})
+    loaded_at = _utcnow().isoformat()
+    photo_rows: list[dict[str, Any]] = []
+
+    for i, run_id in enumerate(run_ids):
+        photo_url, photo_count = strava.get_activity_photos(run_id)
+        photo_rows.append(
+            {
+                "id": run_id,
+                "primary_photo_url": photo_url,
+                "photo_count": photo_count,
+                "loaded_at": loaded_at,
+            }
+        )
+        logger.debug(
+            "Photo fetched",
+            extra={
+                "run_id": run_id,
+                "has_photo": photo_url is not None,
+                "index": i + 1,
+                "total": len(run_ids),
+            },
+        )
+        if len(run_ids) > 1:
+            time.sleep(0.2)  # 5 req/s, well within Strava's 100 req/15 min limit
+
+    if dry_run:
+        logger.info(
+            "Dry run: skipping raw_strava_photos insert",
+            extra={"rows": len(photo_rows)},
+        )
+        return
+
+    bq.insert_rows(dataset_raw, "raw_strava_photos", photo_rows)
+    logger.info("Photo records inserted", extra={"count": len(photo_rows)})
 
 
 # ---------------------------------------------------------------------------
@@ -181,6 +250,11 @@ def main(argv: list[str] | None = None) -> int:
         choices=list(_ENDPOINTS.keys()),
         help="Run a single endpoint only. Defaults to all endpoints.",
     )
+    parser.add_argument(
+        "--photos-only",
+        action="store_true",
+        help="Skip run ingest; only sync missing photo records (useful for backfill).",
+    )
     args = parser.parse_args(argv)
 
     config = load_config()
@@ -200,6 +274,12 @@ def main(argv: list[str] | None = None) -> int:
     for table_name in _ALL_TABLES:
         bq.ensure_table(config.bq_dataset_raw, table_name)
 
+    if args.photos_only:
+        sync_missing_photos(
+            strava, bq, config.bq_dataset_raw, config.bq_project, dry_run=args.dry_run
+        )
+        return 0
+
     endpoints_to_run = [args.endpoint] if args.endpoint else list(_ENDPOINTS.keys())
 
     results: list[dict[str, Any]] = []
@@ -216,6 +296,15 @@ def main(argv: list[str] | None = None) -> int:
             extra={"failed": [r["endpoint"] for r in failed]},
         )
         return 1
+
+    # Sync photos for any newly ingested runs (and any historical gaps).
+    # Non-fatal: a photo sync failure does not fail the pipeline.
+    try:
+        sync_missing_photos(
+            strava, bq, config.bq_dataset_raw, config.bq_project, dry_run=args.dry_run
+        )
+    except Exception:
+        logger.exception("Photo sync failed (non-fatal); run ingest succeeded")
 
     logger.info(
         "Strava pipeline finished successfully",

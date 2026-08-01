@@ -7,6 +7,18 @@ with source as (
     select * from {{ source('whoop_raw', 'raw_strava_runs') }}
 ),
 
+photos as (
+    select
+        id,
+        primary_photo_url,
+        photo_count
+    from {{ source('whoop_raw', 'raw_strava_photos') }}
+    qualify row_number() over (
+        partition by id
+        order by loaded_at desc
+    ) = 1
+),
+
 deduped as (
     select
         id                                                              as run_id,
@@ -56,4 +68,9 @@ deduped as (
     ) = 1
 )
 
-select * from deduped
+select
+    d.*,
+    p.primary_photo_url,
+    p.photo_count
+from deduped d
+left join photos p on d.run_id = p.id

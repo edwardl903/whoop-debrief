@@ -116,6 +116,25 @@ sources:
           - name: loaded_at
             description: Timestamp when the row was inserted by the pipeline.
 
+      - name: raw_strava_photos
+        description: >
+          One row per Strava run recording whether the activity has photos
+          and the primary photo URL (600 px). Written by sync_missing_photos()
+          in scripts/fetch_strava.py after each run ingest. Stored separately
+          from raw_strava_runs to avoid schema migrations on the runs table.
+          Deduplicating on loaded_at desc gives the freshest photo URL per run.
+        config:
+          freshness: null
+        columns:
+          - name: id
+            description: Strava activity ID (matches raw_strava_runs.id).
+          - name: primary_photo_url
+            description: URL of the first Strava-hosted photo at 600 px, or null if no photos.
+          - name: photo_count
+            description: Total number of photos on the activity.
+          - name: loaded_at
+            description: Timestamp when the row was inserted by the pipeline.
+
       - name: raw_strava_runs
         description: >
           One row per Strava run (sport_type in Run / TrailRun / VirtualRun).

@@ -212,6 +212,12 @@ models:
         description: Average cadence in steps/min (null if no sensor).
       - name: suffer_score
         description: Strava suffer score (relative effort).
+      - name: summary_polyline
+        description: Encoded polyline (Google Polyline Algorithm) for the run route. Null when no GPS.
+      - name: primary_photo_url
+        description: URL of the primary Strava activity photo at 600 px. Null when no photos.
+      - name: photo_count
+        description: Total number of photos on the Strava activity. Null when no photo record exists.
       - name: loaded_at
         description: Pipeline insertion timestamp (watermark column).
 

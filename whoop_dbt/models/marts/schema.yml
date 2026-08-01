@@ -109,6 +109,8 @@ models:
           Encoded Google Polyline for the GPS route. Decode with polyline.decode()
           to get lat/lng pairs. Null for indoor runs. Use scripts/generate_route_maps.py
           to render HTML maps from this column.
+      - name: primary_photo_url
+        description: URL of the primary Strava activity photo at 600 px. Null when no photos.
       - name: recovery_delta
         description: next_day_recovery minus same_day_recovery.
       - name: whoop_workout_id

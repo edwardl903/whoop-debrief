@@ -139,6 +139,35 @@ class StravaClient:
 
     # ------------------------------------------------------- public endpoints
 
+    def get_activity_photos(self, activity_id: int) -> tuple[str | None, int]:
+        """Return (primary_photo_url, photo_count) for a Strava activity.
+
+        Calls GET /activities/{id}/photos with photo_sources=true and size=600.
+        Returns (None, 0) when the activity has no photos or the request fails.
+        Photo URLs are stable CDN links (not short-lived signed URLs).
+        """
+        try:
+            photos: list[dict[str, Any]] = self._get(
+                f"/activities/{activity_id}/photos",
+                {"photo_sources": "true", "size": 600},
+            )
+        except StravaAPIError as exc:
+            logger.debug(
+                "Photo fetch failed (non-fatal)",
+                extra={"activity_id": activity_id, "status": exc.status_code},
+            )
+            return None, 0
+        if not photos:
+            return None, 0
+        primary_url: str | None = None
+        for photo in photos:
+            urls = photo.get("urls") or {}
+            url = urls.get("600") or urls.get("100")
+            if url:
+                primary_url = url
+                break
+        return primary_url, len(photos)
+
     def get_runs(self, after: datetime | None = None) -> list[dict[str, Any]]:
         """Return all runs, optionally after a given timestamp.
 

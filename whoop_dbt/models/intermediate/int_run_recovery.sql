@@ -104,6 +104,7 @@ select
     r.average_cadence,
     r.suffer_score,
     r.summary_polyline,
+    r.primary_photo_url,
 
     -- WHOOP context for run day
     sd.same_day_cycle_id,

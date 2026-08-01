@@ -65,6 +65,7 @@ SELECT
     next_day_sleep_quality,
 
     recovery_delta,
+    primary_photo_url,
     CAST(loaded_at AS STRING)       AS loaded_at
 
 FROM `{project}.{dataset}.int_run_recovery`

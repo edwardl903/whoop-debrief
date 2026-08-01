@@ -90,6 +90,10 @@ models:
           Encoded Google Polyline representing the GPS route shape. Decode with
           polyline.decode() to get lat/lng pairs for map rendering. Null for
           treadmill/indoor runs with no GPS.
+      - name: primary_photo_url
+        description: >
+          URL of the primary Strava activity photo at 600 px. Null when the run
+          has no photos or the photo record has not yet been synced.
       - name: recovery_delta
         description: >
           next_day_recovery minus same_day_recovery. Positive = recovery improved

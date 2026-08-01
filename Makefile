@@ -1,4 +1,4 @@
-.PHONY: install auth strava-auth fetch fetch-strava fetch-all reset-tables route-maps export-runs dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
+.PHONY: install auth strava-auth fetch fetch-strava fetch-all backfill-photos reset-tables route-maps export-runs dbt-run dbt-test dbt-deps dbt-seed dbt-snapshot dbt-freshness dbt-docs all lint format test
 
 # Always python3.13 — dbt does not support 3.14. Install deps with `make install`
 # (not plain `pip install` in a 3.14 venv, or Makefile targets won't see them).
@@ -28,6 +28,10 @@ fetch-strava:
 
 # Fetch both sources
 fetch-all: fetch fetch-strava
+
+# Fetch photos for all existing Strava runs missing a photo record (backfill)
+backfill-photos:
+	$(PYTHON) scripts/fetch_strava.py --photos-only $(ARGS)
 
 # Drop and recreate all raw tables (use when schemas change)
 reset-tables:

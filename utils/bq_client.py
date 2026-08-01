@@ -169,6 +169,14 @@ _SCHEMAS: dict[str, list[bigquery.SchemaField]] = {
         bigquery.SchemaField("last_name", "STRING", mode="NULLABLE"),
         bigquery.SchemaField("loaded_at", "TIMESTAMP", mode="REQUIRED"),
     ],
+    # Strava photo records: one row per run, inserted by sync_missing_photos().
+    # Separate from raw_strava_runs to avoid schema migrations on the runs table.
+    "raw_strava_photos": [
+        bigquery.SchemaField("id", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("primary_photo_url", "STRING", mode="NULLABLE"),
+        bigquery.SchemaField("photo_count", "INTEGER", mode="NULLABLE"),
+        bigquery.SchemaField("loaded_at", "TIMESTAMP", mode="REQUIRED"),
+    ],
     # Strava API returns flat JSON (no nested STRUCTs needed).
     "raw_strava_runs": [
         bigquery.SchemaField("id", "INTEGER", mode="REQUIRED"),

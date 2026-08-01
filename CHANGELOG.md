@@ -9,6 +9,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.6.0] — 2026-07-31 — Strava photo ingest
+
+### Added
+
+- `utils/bq_client.py` — `raw_strava_photos` schema: `id` (Strava activity ID),
+  `primary_photo_url`, `photo_count`, `loaded_at`. Separate table from
+  `raw_strava_runs` to avoid schema migrations on the existing runs table.
+- `utils/strava_client.py` — `get_activity_photos(activity_id)` method: calls
+  `GET /activities/{id}/photos?photo_sources=true&size=600`, returns
+  `(primary_url, photo_count)`. Returns `(None, 0)` on 404 or empty list.
+- `scripts/fetch_strava.py` — `sync_missing_photos()`: queries BigQuery for
+  `raw_strava_runs` rows with no matching `raw_strava_photos` entry, fetches
+  photos from the Strava API, and inserts into `raw_strava_photos`. Called
+  automatically at the end of each `make fetch-strava` run (non-fatal: a photo
+  sync failure does not fail the pipeline). Also supports `--photos-only` flag
+  for standalone backfill runs.
+- `Makefile` — `backfill-photos` target: runs `fetch_strava.py --photos-only`
+  to populate `raw_strava_photos` for all existing runs in BigQuery.
+
+### Changed
+
+- `whoop_dbt/models/staging/stg_strava_runs.sql` — added `photos` CTE (reads
+  and deduplicates `raw_strava_photos`) and a LEFT JOIN to expose
+  `primary_photo_url` and `photo_count` per run.
+- `whoop_dbt/models/intermediate/int_run_recovery.sql` — added `primary_photo_url`
+  passthrough from `stg_strava_runs`.
+- `whoop_dbt/models/marts/fct_runs.sql` — inherits `primary_photo_url` via
+  `select *` from `int_run_recovery`; `on_schema_change='sync_all_columns'`
+  handles the BigQuery column addition automatically on next `dbt run`.
+- `scripts/export_runs_json.py` — added `primary_photo_url` to `_QUERY` so
+  `data/runs.json` includes the photo URL for the portfolio serve layer.
+- `whoop_dbt/models/staging/sources.yml` — added `raw_strava_photos` source
+  with `freshness: null` (photos do not have a daily ingestion cadence).
+- `whoop_dbt/models/staging/schema.yml` — added `summary_polyline`,
+  `primary_photo_url`, and `photo_count` columns to `stg_strava_runs`.
+- `whoop_dbt/models/intermediate/schema.yml` — added `primary_photo_url` to
+  `int_run_recovery`.
+- `whoop_dbt/models/marts/schema.yml` — added `primary_photo_url` to `fct_runs`.
+
+---
+
 ## [0.5.0] — 2026-07-23 — fct_workouts, profile ingest, raw field surfacing, WHOOP/Strava workout match
 
 ### Added
