@@ -9,6 +9,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.7.0] — 2026-08-01 — CTL/ATL/TSB training load model
+
+### Added
+
+- `whoop_dbt/models/intermediate/int_training_load.sql` -- Daily training load
+  metrics using the Coggan CTL/ATL/TSB framework. CTL (42-day EWMA) = fitness,
+  ATL (7-day EWMA) = fatigue, TSB = CTL - ATL (form). Daily TSS derived from
+  WHOOP strain normalized to 0-100 scale. Implemented as a BigQuery self-join
+  (O(n * 180) lookback) rather than a recursive CTE. Also computes:
+  `ctl_7d_delta` (fitness trend), `fitness_phase` (building/maintaining/declining),
+  `form_label` (very_fresh/peak_form/neutral/fatigued/overtrained),
+  `training_monotony_7d` (Foster 1998 injury-risk ratio).
+
+- `whoop_dbt/models/marts/fct_weekly_training_summary.sql` -- Weekly aggregate
+  mart. Combines `int_training_load` end-of-week snapshots with `fct_runs`
+  volume metrics. Includes week-over-week CTL, TSS, and distance deltas.
+  `load_spike_flag` fires when ATL > 1.5x CTL (acute overload threshold).
+
+- `scripts/export_training_load.py` -- Exports `int_training_load` to
+  `data/training_load.json` and `fct_weekly_training_summary` to
+  `data/weekly_summary.json` for the portfolio serve layer via jsDelivr CDN.
+
+- `Makefile` -- `export-training-load` target.
+
+- `.github/workflows/pipeline.yml` -- New step runs `export_training_load.py`
+  after dbt; CI now commits `training_load.json` and `weekly_summary.json`
+  alongside `runs.json` on each nightly run.
+
+- `whoop_dbt/models/intermediate/schema.yml` -- Full column documentation for
+  `int_training_load` including meta tags (owner, tier, sla).
+
+- `whoop_dbt/models/marts/schema.yml` -- Full column documentation for
+  `fct_weekly_training_summary` including `load_spike_flag` semantics.
+
+---
+
 ## [0.6.0] — 2026-07-31 — Strava photo ingest
 
 ### Added

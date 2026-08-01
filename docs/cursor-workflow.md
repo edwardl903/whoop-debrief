@@ -81,6 +81,7 @@ Files: scripts/fetch.py, utils/bq_client.py
 
 | Date | Change |
 |------|--------|
+| 2026-08-01 | CTL/ATL/TSB training load models: int_training_load (EWMA self-join, monotony), fct_weekly_training_summary (weekly agg + WoW deltas + load_spike_flag); export_training_load.py; CI updated to commit training_load.json + weekly_summary.json |
 | 2026-07-31 | Strava photo ingest: raw_strava_photos table, sync_missing_photos() in fetch_strava.py, stg_strava_runs LEFT JOIN photos, primary_photo_url through int_run_recovery + fct_runs + runs.json; backfill-photos make target |
 | 2026-07-23 | fct_workouts (int_workout_recovery + mart); profile ingest (raw_users, stg_raw_users, dim_user join); surface sleep-need/altitude raw fields; WHOOP workout match in int_run_recovery/fct_runs; full schema.yml + mental-model update |
 | 2026-07-09 | Route maps: summary_polyline through to fct_runs; scripts/generate_route_maps.py (folium); dbt docs on GitHub Pages; dbt source freshness in CI; docs sweep |

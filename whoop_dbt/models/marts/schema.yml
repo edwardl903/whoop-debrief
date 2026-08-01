@@ -210,3 +210,77 @@ models:
         description: Day-over-day change in strain score.
       - name: hrv_dod
         description: Day-over-day change in HRV RMSSD (ms).
+
+  - name: fct_weekly_training_summary
+    description: >
+      Weekly aggregate of training load and WHOOP wellness metrics.
+      Grain: one row per user_id + ISO week (Monday-anchored).
+      Combines CTL/ATL/TSB end-of-week snapshots from int_training_load with
+      weekly run volume from fct_runs. Week-over-week deltas show whether the
+      athlete is building fitness, maintaining, or deloading. Includes a
+      load_spike_flag when ATL exceeds 1.5x CTL -- a conventional threshold
+      for acute overload and elevated injury risk.
+    meta:
+      owner: edward
+      tier: gold
+      sla: daily
+    columns:
+      - name: week_start
+        description: Monday of the ISO week (DATE, Monday-anchored).
+        tests:
+          - not_null
+      - name: week_end
+        description: Sunday of the ISO week.
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: tracked_days
+        description: Number of days with WHOOP data in the week (1-7).
+      - name: total_weekly_tss
+        description: Sum of daily TSS for the week. Proxy for total training load.
+      - name: avg_daily_tss
+        description: Average TSS per day across the week.
+      - name: week_end_ctl
+        description: CTL (fitness) at end of week. Rising week-over-week = building.
+      - name: week_end_atl
+        description: ATL (fatigue) at end of week.
+      - name: week_end_tsb
+        description: TSB (form) at end of week. Positive = fresh, negative = fatigued.
+      - name: week_end_form
+        description: Form label at end of week (very_fresh / peak_form / neutral / fatigued / overtrained).
+      - name: fitness_phase
+        description: Fitness trajectory at end of week (building / maintaining / declining).
+      - name: avg_recovery
+        description: Average WHOOP recovery score across the week.
+      - name: avg_hrv_rmssd
+        description: Average HRV RMSSD (ms) across the week.
+      - name: avg_rhr
+        description: Average resting heart rate (bpm) across the week.
+      - name: avg_monotony
+        description: Average 7-day training monotony ratio. Above 2 signals insufficient variation.
+      - name: hard_days
+        description: Days with WHOOP strain >= 10.
+      - name: easy_or_rest_days
+        description: Days with WHOOP strain < 5 or no data (recovery / rest days).
+      - name: run_count
+        description: Number of runs logged via Strava in the week.
+      - name: total_distance_km
+        description: Total running distance (km) for the week.
+      - name: total_run_minutes
+        description: Total moving time across all runs (minutes).
+      - name: avg_pace_min_per_km
+        description: Average pace across all runs (min/km). Null if no runs.
+      - name: avg_run_hr
+        description: Average heart rate across all runs (bpm). Null if no HR data.
+      - name: ctl_wow_delta
+        description: Week-over-week change in CTL. Positive = gaining fitness.
+      - name: tss_wow_delta
+        description: Week-over-week change in total TSS. Positive = higher load week.
+      - name: distance_wow_delta_km
+        description: Week-over-week change in running distance (km).
+      - name: load_spike_flag
+        description: >
+          True when ATL > 1.5 * CTL. Flags acute overload -- a conventional signal
+          for elevated injury and illness risk when fatigue spikes faster than
+          fitness can absorb it.

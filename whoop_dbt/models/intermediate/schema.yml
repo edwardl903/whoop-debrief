@@ -170,3 +170,68 @@ models:
         description: Net sleep hours the night following the workout.
       - name: next_day_sleep_quality
         description: "'excellent', 'good', 'fair', or 'poor' the night following the workout."
+
+  - name: int_training_load
+    description: >
+      Daily training load model implementing the Coggan CTL/ATL/TSB framework.
+      CTL (Chronic Training Load, 42-day EWMA) represents accumulated fitness.
+      ATL (Acute Training Load, 7-day EWMA) represents current fatigue.
+      TSB (Training Stress Balance) = CTL - ATL, representing readiness / form.
+      Daily Training Stress Score (TSS) is derived from WHOOP day strain normalized
+      to a 0-100 scale (strain * 100/21). Lookback window is capped at 180 days,
+      which retains more than 99.9 percent of exponential kernel weight. Also includes
+      7-day CTL delta, fitness phase (building / maintaining / declining), and 7-day
+      training monotony ratio as a injury-risk signal.
+      Grain: one row per user_id + cycle_date.
+    meta:
+      owner: edward
+      tier: silver
+      sla: daily
+    columns:
+      - name: cycle_date
+        description: Calendar date of the training day.
+        tests:
+          - not_null
+      - name: user_id
+        description: WHOOP user ID.
+        tests:
+          - not_null
+      - name: daily_tss
+        description: Daily training stress score (WHOOP strain normalized to 0-100).
+      - name: strain_score
+        description: Raw WHOOP day strain (0-21).
+      - name: recovery_score
+        description: WHOOP recovery score (0-100). Null if not scored.
+      - name: hrv_rmssd_milli
+        description: HRV RMSSD in milliseconds.
+      - name: resting_heart_rate
+        description: Resting heart rate (bpm).
+      - name: ctl
+        description: >
+          Chronic Training Load -- 42-day exponentially weighted moving average of TSS.
+          Represents accumulated fitness. Higher is fitter. Rises slowly, falls slowly.
+      - name: atl
+        description: >
+          Acute Training Load -- 7-day exponentially weighted moving average of TSS.
+          Represents current fatigue. Responds quickly to hard training or rest.
+      - name: tsb
+        description: >
+          Training Stress Balance = CTL - ATL. Represents form or readiness.
+          Positive TSB: fresh/recovered. Negative TSB: fatigued. Best race
+          performance typically occurs with TSB between +5 and +25.
+      - name: form_label
+        description: >
+          Categorical form label based on TSB:
+          'very_fresh' (>25), 'peak_form' (5-25), 'neutral' (-10 to 5),
+          'fatigued' (-30 to -10), 'overtrained' (<-30).
+      - name: fitness_phase
+        description: >
+          'building' if CTL is higher than 7 days ago, 'declining' if lower,
+          'maintaining' if flat.
+      - name: ctl_7d_delta
+        description: Change in CTL over the past 7 days. Positive = gaining fitness.
+      - name: training_monotony_7d
+        description: >
+          Ratio of 7-day average TSS to its standard deviation. Values above 2
+          indicate insufficient variation -- a signal associated with elevated
+          injury and illness risk (Foster 1998).
