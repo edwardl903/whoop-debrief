@@ -3,6 +3,8 @@
 *.json
 !*.example.json
 !data/runs.json
+!data/training_load.json
+!data/weekly_summary.json
 credentials/
 gcp/
 
