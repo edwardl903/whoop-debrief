@@ -220,10 +220,11 @@ models:
       athlete is building fitness, maintaining, or deloading. Includes a
       load_spike_flag when ATL exceeds 1.5x CTL -- a conventional threshold
       for acute overload and elevated injury risk.
-    meta:
-      owner: edward
-      tier: gold
-      sla: daily
+    config:
+      meta:
+        owner: edward
+        tier: gold
+        sla: daily
     columns:
       - name: week_start
         description: Monday of the ISO week (DATE, Monday-anchored).

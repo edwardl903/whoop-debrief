@@ -183,10 +183,11 @@ models:
       7-day CTL delta, fitness phase (building / maintaining / declining), and 7-day
       training monotony ratio as a injury-risk signal.
       Grain: one row per user_id + cycle_date.
-    meta:
-      owner: edward
-      tier: silver
-      sla: daily
+    config:
+      meta:
+        owner: edward
+        tier: silver
+        sla: daily
     columns:
       - name: cycle_date
         description: Calendar date of the training day.

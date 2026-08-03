@@ -24,7 +24,6 @@ training_load as (
 runs as (
     select
         run_date,
-        user_id,
         distance_km,
         moving_time_min,
         pace_min_per_km,
@@ -78,17 +77,18 @@ weekly_load as (
 ),
 
 -- Weekly run aggregates
+-- fct_runs does not surface user_id, so join to weekly_load on week_start only.
+-- Single-user pipeline: no fan-out risk from this cartesian-free join.
 weekly_runs as (
     select
         date_trunc(run_date, week(monday))  as week_start,
-        user_id,
         count(*)                            as run_count,
         round(sum(distance_km), 2)          as total_distance_km,
         round(sum(moving_time_min), 1)      as total_run_minutes,
         round(avg(pace_min_per_km), 2)      as avg_pace_min_per_km,
         round(avg(run_avg_hr), 1)           as avg_run_hr
     from runs
-    group by 1, 2
+    group by 1
 ),
 
 final as (
@@ -151,8 +151,7 @@ final as (
 
     from weekly_load as wl
     left join weekly_runs as wr
-        on  wr.user_id    = wl.user_id
-        and wr.week_start = wl.week_start
+        on wr.week_start = wl.week_start
 )
 
 select * from final
