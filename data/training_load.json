@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "generated_at": "2026-08-03T21:56:15.838915+00:00",
+=======
+  "generated_at": "2026-08-03T21:53:08.067304+00:00",
+>>>>>>> 918d224 (update to jsons)
   "row_count": 43,
   "description": "Daily CTL/ATL/TSB training load metrics. CTL = 42-day EWMA fitness. ATL = 7-day EWMA fatigue. TSB = CTL - ATL (form). TSS derived from WHOOP strain (0-21) normalized to 0-100.",
   "rows": [
