@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "generated_at": "2026-08-03T21:56:15.838915+00:00",
-=======
-  "generated_at": "2026-08-03T21:53:08.067304+00:00",
->>>>>>> 918d224 (update to jsons)
+  "generated_at": "2026-08-03T22:17:43.282186+00:00",
   "row_count": 8,
   "description": "Weekly training summary: CTL/ATL/TSB end-of-week snapshots, run volume, recovery, and week-over-week deltas.",
   "rows": [
@@ -55,11 +51,7 @@
       "easy_or_rest_days": 1,
       "run_count": 5,
       "total_distance_km": 25.98,
-<<<<<<< HEAD
-      "total_run_minutes": 143.1,
-=======
       "total_run_minutes": 143.0,
->>>>>>> 918d224 (update to jsons)
       "avg_pace_min_per_km": 5.5,
       "avg_run_hr": 152.0,
       "ctl_wow_delta": 6.6,
