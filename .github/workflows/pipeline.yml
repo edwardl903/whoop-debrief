@@ -197,7 +197,7 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
           for attempt in 1 2 3 4 5; do
             git fetch origin "$BRANCH"
-            git pull --rebase origin "$BRANCH"
+            git pull --rebase --autostash origin "$BRANCH"
             if git push origin "HEAD:$BRANCH"; then
               echo "Push succeeded on attempt $attempt"
               exit 0
