@@ -109,6 +109,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -189,10 +191,22 @@ jobs:
           git add data/runs.json data/training_load.json data/weekly_summary.json
           if git diff --staged --quiet; then
             echo "data files unchanged -- nothing to commit"
-          else
-            git commit -m "chore(data): refresh runs + training load JSON [skip ci]"
-            git push
+            exit 0
           fi
+          git commit -m "chore(data): refresh runs + training load JSON [skip ci]"
+          BRANCH="${GITHUB_REF_NAME}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "$BRANCH"
+            git pull --rebase origin "$BRANCH"
+            if git push origin "HEAD:$BRANCH"; then
+              echo "Push succeeded on attempt $attempt"
+              exit 0
+            fi
+            echo "Push rejected on attempt $attempt, retrying..."
+            sleep $((attempt * 2))
+          done
+          echo "Push failed after 5 attempts"
+          exit 1
 
       - name: Upload dbt artifacts
         if: always()
