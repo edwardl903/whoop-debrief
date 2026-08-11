@@ -297,7 +297,7 @@ header .pip{color:var(--border);margin:0 2px}
 
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────
-const RUNS_URL = 'https://cdn.jsdelivr.net/gh/edwardol903/whoop-analytics@main/data/runs.json';
+const RUNS_URL = 'https://cdn.jsdelivr.net/gh/edwardl903/whoop-analytics@main/data/runs.json';
 let RUNS = [];
 
 // ── State ─────────────────────────────────────────────────────────────────
