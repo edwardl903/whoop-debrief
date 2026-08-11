@@ -1,33 +1,26 @@
 """Generate output/run_replay.html — an animated multi-run replay viewer.
 
-Reads data/runs.json (no BigQuery needed), decodes Strava summary_polylines,
-computes cumulative distances, and embeds everything in a self-contained
-dark-themed HTML app.
+The HTML file fetches runs.json from jsDelivr at runtime, so the replay always
+reflects the latest pipeline run without requiring manual regeneration.
 
 Features:
-  - Filter runs by Month / Week / Day
+  - Filter runs by Year / Month / Week / Day
   - Simultaneous animation of all runs in the selected period
   - Progressive path reveal: completed route lights up as each dot moves
   - Duration-proportional speed: longer runs take longer to finish
   - Pause / resume / scrub via progress bar
   - Click any route or dot to see WHOOP + Strava stats for that run
   - CartoDB Dark Matter tiles (no API key needed)
-  - Recovery-colored routes (green / yellow / red / blue)
+  - Highlights: Longest / Fastest / Latest
 
 Usage:
-    python3.13 scripts/generate_run_replay.py
+    python3 scripts/generate_run_replay.py
     make run-replay
 """
 from __future__ import annotations
 
-import json
 import logging
-import math
 import pathlib
-from datetime import datetime, timedelta
-from typing import Any
-
-import polyline as polyline_lib
 
 from utils.logging_setup import configure_logging
 
@@ -38,93 +31,7 @@ _OUT = pathlib.Path("output/run_replay.html")
 
 
 # ---------------------------------------------------------------------------
-# Geometry helpers
-# ---------------------------------------------------------------------------
-
-def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    R = 6_371_000.0
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlam = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2
-    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-
-def _cumulative_distances(coords: list[list[float]]) -> list[float]:
-    dists = [0.0]
-    for i in range(1, len(coords)):
-        dists.append(dists[-1] + _haversine_m(*coords[i - 1], *coords[i]))
-    return dists
-
-
-# ---------------------------------------------------------------------------
-# Period labelling
-# ---------------------------------------------------------------------------
-
-def _period_keys(date_str: str) -> dict[str, str]:
-    dt = datetime.strptime(date_str, "%Y-%m-%d")
-    year, week, _ = dt.isocalendar()
-    monday = dt - timedelta(days=dt.weekday())
-    return {
-        "year": dt.strftime("%Y"),
-        "year_label": dt.strftime("%Y"),
-        "month": dt.strftime("%Y-%m"),
-        "month_label": dt.strftime("%B %Y"),
-        "week": f"{year}-W{week:02d}",
-        "week_label": f"Week of {monday.strftime('%b')} {monday.day}",
-        "day": date_str,
-        "day_label": f"{dt.strftime('%b')} {dt.day}, {dt.year}",
-    }
-
-
-# ---------------------------------------------------------------------------
-# Data processing
-# ---------------------------------------------------------------------------
-
-def _process_runs(raw_runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    processed: list[dict[str, Any]] = []
-    for run in raw_runs:
-        date_str = str(run.get("run_date") or "")
-        if not date_str:
-            continue
-        periods = _period_keys(date_str)
-
-        encoded = run.get("summary_polyline") or ""
-        if encoded:
-            tuples = polyline_lib.decode(encoded)
-            coords: list[list[float]] | None = [[lat, lng] for lat, lng in tuples]
-            distances: list[float] | None = _cumulative_distances(coords)
-        else:
-            coords = None
-            distances = None
-
-        avg_speed_kmh = run.get("avg_speed_kmh")
-        speed_mph = round(avg_speed_kmh * 0.621371, 2) if avg_speed_kmh else None
-
-        processed.append({
-            "run_id": str(run.get("run_id") or ""),
-            "run_name": run.get("run_name") or "Run",
-            "date": date_str,
-            **periods,
-            "distance_km": run.get("distance_km"),
-            "moving_time_min": run.get("moving_time_min") or 1.0,
-            "pace_min_per_km": run.get("pace_min_per_km"),
-            "speed_mph": speed_mph,
-            "run_avg_hr": run.get("run_avg_hr"),
-            "run_max_hr": run.get("run_max_hr"),
-            "same_day_recovery": run.get("same_day_recovery"),
-            "same_day_sleep_hours": run.get("same_day_sleep_hours"),
-            "same_day_sleep_quality": run.get("same_day_sleep_quality"),
-            "next_day_recovery": run.get("next_day_recovery"),
-            "recovery_delta": run.get("recovery_delta"),
-            "coords": coords,
-            "distances": distances,
-        })
-    return processed
-
-
-# ---------------------------------------------------------------------------
-# HTML template  (JS uses "__RUNS_DATA__" as a placeholder)
+# HTML template  (data is fetched from jsDelivr at runtime)
 # ---------------------------------------------------------------------------
 
 _HTML = r"""<!DOCTYPE html>
@@ -386,9 +293,12 @@ header .pip{color:var(--border);margin:0 2px}
   </div>
 </div>
 
+<div id="loading" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:9999;color:var(--muted);font-size:13px">Loading runs…</div>
+
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────
-const RUNS = "__RUNS_DATA__";
+const RUNS_URL = 'https://cdn.jsdelivr.net/gh/edwardol903/whoop-analytics@main/data/runs.json';
+let RUNS = [];
 
 // ── State ─────────────────────────────────────────────────────────────────
 const S = {
@@ -413,9 +323,7 @@ const S = {
 const ANIM_MS = 25000; // 25 s = full animation regardless of period length
 
 // ── Speed color scale (blue → gold → red = slow → fast) ──────────────────
-const _ALL_SPEEDS = RUNS.filter(r => r.speed_mph).map(r => r.speed_mph);
-const MIN_SPEED = _ALL_SPEEDS.length ? Math.min(..._ALL_SPEEDS) : 5;
-const MAX_SPEED = _ALL_SPEEDS.length ? Math.max(..._ALL_SPEEDS) : 10;
+let _ALL_SPEEDS = [], MIN_SPEED = 5, MAX_SPEED = 10;
 const _STOPS = [[68,136,204],[240,180,41],[248,81,73]]; // #4488cc #f0b429 #f85149
 
 function speedColor(mph) {
@@ -550,15 +458,8 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   maxZoom: 20,
 }).addTo(S.map);
 
-// Default center: centroid of all GPS runs
-(function() {
-  const gps = RUNS.filter(r => r.coords && r.coords.length);
-  if (!gps.length) { S.map.setView([42.37, -71.1], 13); return; }
-  const all = gps.flatMap(r => r.coords);
-  const lat = all.reduce((s, c) => s + c[0], 0) / all.length;
-  const lng = all.reduce((s, c) => s + c[1], 0) / all.length;
-  S.map.setView([lat, lng], 13);
-})();
+// Default center (Boston fallback) — recalculated in initApp() after RUNS loads
+S.map.setView([42.37, -71.1], 13);
 
 // ── Map drawing ────────────────────────────────────────────────────────────
 function clearMap() {
@@ -1125,37 +1026,158 @@ function renderDetailOnly(run) {
   document.getElementById('detail-panel').style.display = 'flex';
 }
 
-// ── Highlights (Longest / Fastest / Latest) ────────────────────────────────
-const HL_GPS = RUNS.filter(r => r.coords && r.speed_mph);
-const HL_DEFS = {
-  longest: { fn: rs => rs.reduce((a, b) => (b.distance_km||0) > (a.distance_km||0) ? b : a) },
-  fastest: { fn: rs => rs.filter(r => r.speed_mph).reduce((a, b) => b.speed_mph > a.speed_mph ? b : a) },
-  latest:  { fn: rs => rs.reduce((a, b) => b.date > a.date ? b : a) },
-};
+// ── Data helpers (polyline decode + run processing) ─────────────────────────
+function decodePolyline(encoded) {
+  const coords = [];
+  let lat = 0, lng = 0, idx = 0;
+  while (idx < encoded.length) {
+    let b, shift = 0, result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+    shift = 0; result = 0;
+    do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+    coords.push([lat / 1e5, lng / 1e5]);
+  }
+  return coords;
+}
 
-document.querySelectorAll('.hbtn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const def = HL_DEFS[btn.dataset.hl];
-    if (!def || !HL_GPS.length) return;
-    const run = def.fn(HL_GPS);
-    if (!run) return;
+function haversineM(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const phi1 = lat1 * Math.PI/180, phi2 = lat2 * Math.PI/180;
+  const dphi = (lat2 - lat1) * Math.PI/180;
+  const dlam = (lon2 - lon1) * Math.PI/180;
+  const a = Math.sin(dphi/2)**2 + Math.cos(phi1)*Math.cos(phi2)*Math.sin(dlam/2)**2;
+  return 2*R*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
-    document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+function cumulativeDistances(coords) {
+  const dists = [0];
+  for (let i = 1; i < coords.length; i++)
+    dists.push(dists[i-1] + haversineM(coords[i-1][0], coords[i-1][1], coords[i][0], coords[i][1]));
+  return dists;
+}
 
-    // Switch to Day gran and play just that run's day
-    document.querySelectorAll('.gtab').forEach(b => b.classList.remove('active'));
-    document.querySelector('.gtab[data-gran="day"]').classList.add('active');
-    S.gran = 'day';
-    selectPeriod(run.day);
+function periodKeys(dateStr) {
+  const dt = new Date(dateStr + 'T12:00:00');
+  const y = dt.getFullYear(), m = dt.getMonth(), d = dt.getDate();
+  const mm = String(m + 1).padStart(2, '0');
+  const MSHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MLONG  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // ISO week number
+  const thu = new Date(Date.UTC(y, m, d));
+  thu.setUTCDate(thu.getUTCDate() + 4 - (thu.getUTCDay() || 7));
+  const jan1 = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1));
+  const wk = Math.ceil(((thu - jan1) / 86400000 + 1) / 7);
+  const isoY = thu.getUTCFullYear();
+  // Monday of the ISO week
+  const mon = new Date(y, m, d);
+  mon.setDate(mon.getDate() - (mon.getDay() || 7) + 1);
+  return {
+    year:        String(y),
+    year_label:  String(y),
+    month:       `${y}-${mm}`,
+    month_label: `${MLONG[m]} ${y}`,
+    week:        `${isoY}-W${String(wk).padStart(2,'00')}`,
+    week_label:  `Week of ${MSHORT[mon.getMonth()]} ${mon.getDate()}`,
+    day:         dateStr,
+    day_label:   `${MSHORT[m]} ${d}, ${y}`,
+  };
+}
+
+function processRuns(rawRuns) {
+  return rawRuns.map(run => {
+    const dateStr = run.run_date || '';
+    if (!dateStr) return null;
+    const periods = periodKeys(dateStr);
+    const encoded = run.summary_polyline || '';
+    let coords = null, distances = null;
+    if (encoded) {
+      try { coords = decodePolyline(encoded); distances = cumulativeDistances(coords); }
+      catch(e) { coords = null; distances = null; }
+    }
+    const akph = run.avg_speed_kmh;
+    const speed_mph = akph ? Math.round(akph * 0.621371 * 100) / 100 : null;
+    return {
+      run_id:              String(run.run_id || ''),
+      run_name:            run.run_name || 'Run',
+      date:                dateStr,
+      ...periods,
+      distance_km:         run.distance_km,
+      moving_time_min:     run.moving_time_min || 1,
+      pace_min_per_km:     run.pace_min_per_km,
+      speed_mph,
+      run_avg_hr:          run.run_avg_hr,
+      run_max_hr:          run.run_max_hr,
+      same_day_recovery:   run.same_day_recovery,
+      same_day_sleep_hours: run.same_day_sleep_hours,
+      same_day_sleep_quality: run.same_day_sleep_quality,
+      next_day_recovery:   run.next_day_recovery,
+      recovery_delta:      run.recovery_delta,
+      coords,
+      distances,
+    };
+  }).filter(Boolean);
+}
+
+// ── Highlights + init (deferred until RUNS loads) ───────────────────────────
+let HL_GPS = [], HL_DEFS;
+
+function centerMap() {
+  const gps = RUNS.filter(r => r.coords && r.coords.length);
+  if (!gps.length) return;
+  const all = gps.flatMap(r => r.coords);
+  const lat = all.reduce((s, c) => s + c[0], 0) / all.length;
+  const lng = all.reduce((s, c) => s + c[1], 0) / all.length;
+  S.map.setView([lat, lng], 13);
+}
+
+function initApp() {
+  _ALL_SPEEDS = RUNS.filter(r => r.speed_mph).map(r => r.speed_mph);
+  MIN_SPEED = _ALL_SPEEDS.length ? Math.min(..._ALL_SPEEDS) : 5;
+  MAX_SPEED = _ALL_SPEEDS.length ? Math.max(..._ALL_SPEEDS) : 10;
+
+  centerMap();
+
+  HL_GPS = RUNS.filter(r => r.coords && r.speed_mph);
+  HL_DEFS = {
+    longest: { fn: rs => rs.reduce((a, b) => (b.distance_km||0) > (a.distance_km||0) ? b : a) },
+    fastest: { fn: rs => rs.filter(r => r.speed_mph).reduce((a, b) => b.speed_mph > a.speed_mph ? b : a) },
+    latest:  { fn: rs => rs.reduce((a, b) => b.date > a.date ? b : a) },
+  };
+
+  document.querySelectorAll('.hbtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const def = HL_DEFS[btn.dataset.hl];
+      if (!def || !HL_GPS.length) return;
+      const run = def.fn(HL_GPS);
+      if (!run) return;
+      document.querySelectorAll('.hbtn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Switch to Day gran and play just that run's day
+      document.querySelectorAll('.gtab').forEach(b => b.classList.remove('active'));
+      document.querySelector('.gtab[data-gran="day"]').classList.add('active');
+      S.gran = 'day';
+      selectPeriod(run.day);
+    });
   });
-});
 
-// ── Init ───────────────────────────────────────────────────────────────────
-document.getElementById('speed-range').textContent =
-  MIN_SPEED.toFixed(1) + ' – ' + MAX_SPEED.toFixed(1) + ' mph';
-updateDirBtn();
-buildPeriodList();
+  document.getElementById('speed-range').textContent =
+    MIN_SPEED.toFixed(1) + ' \u2013 ' + MAX_SPEED.toFixed(1) + ' mph';
+  updateDirBtn();
+  buildPeriodList();
+
+  document.getElementById('loading').style.display = 'none';
+}
+
+// ── Bootstrap ───────────────────────────────────────────────────────────────
+fetch(RUNS_URL)
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => { RUNS = processRuns(data.runs || []); initApp(); })
+  .catch(err => {
+    document.getElementById('loading').innerHTML =
+      '<p style="color:var(--red);padding:16px">Failed to load run data: ' + err.message + '</p>';
+  });
 </script>
 </body>
 </html>
@@ -1169,25 +1191,10 @@ buildPeriodList();
 def main() -> int:
     configure_logging()
 
-    if not _RUNS_JSON.exists():
-        logger.error("runs.json not found; run `make export-runs` first", extra={"path": str(_RUNS_JSON)})
-        return 1
-
-    payload = json.loads(_RUNS_JSON.read_text())
-    raw_runs: list[dict[str, Any]] = payload.get("runs", [])
-    logger.info("Loaded runs", extra={"count": len(raw_runs)})
-
-    runs_data = _process_runs(raw_runs)
-    gps_count = sum(1 for r in runs_data if r["coords"])
-    logger.info("Processed runs", extra={"total": len(runs_data), "with_gps": gps_count})
-
-    runs_json = json.dumps(runs_data, separators=(",", ":"))
-    html = _HTML.replace('"__RUNS_DATA__"', runs_json)
-
     _OUT.parent.mkdir(parents=True, exist_ok=True)
-    _OUT.write_text(html, encoding="utf-8")
+    _OUT.write_text(_HTML, encoding="utf-8")
 
-    logger.info("Run replay written", extra={"path": str(_OUT)})
+    logger.info("Run replay written (fetches runs.json from jsDelivr at runtime)", extra={"path": str(_OUT)})
     return 0
 
 
