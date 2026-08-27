@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-26T06:26:36.364039+00:00",
-  "row_count": 65,
+  "generated_at": "2026-08-27T16:57:29.769246+00:00",
+  "row_count": 67,
   "description": "Daily CTL/ATL/TSB training load metrics. CTL = 42-day EWMA fitness. ATL = 7-day EWMA fatigue. TSB = CTL - ATL (form). TSS derived from WHOOP strain (0-21) normalized to 0-100.",
   "rows": [
     {
@@ -1031,7 +1031,7 @@
       "cycle_date": "2026-08-25",
       "user_id": "38501819",
       "daily_tss": 70.98,
-      "strain_score": 14.904893,
+      "strain_score": 14.904815,
       "recovery_score": 44.0,
       "hrv_rmssd_milli": 67.71793,
       "resting_heart_rate": 52.0,
@@ -1042,6 +1042,38 @@
       "fitness_phase": "building",
       "ctl_7d_delta": 1.6,
       "training_monotony_7d": 3.34
+    },
+    {
+      "cycle_date": "2026-08-26",
+      "user_id": "38501819",
+      "daily_tss": 56.42,
+      "strain_score": 11.848741,
+      "recovery_score": 64.0,
+      "hrv_rmssd_milli": 80.55563,
+      "resting_heart_rate": 49.0,
+      "ctl": 46.5,
+      "atl": 59.0,
+      "tsb": -12.5,
+      "form_label": "fatigued",
+      "fitness_phase": "building",
+      "ctl_7d_delta": 1.8,
+      "training_monotony_7d": 3.52
+    },
+    {
+      "cycle_date": "2026-08-27",
+      "user_id": "38501819",
+      "daily_tss": 20.33,
+      "strain_score": 4.2683067,
+      "recovery_score": 46.0,
+      "hrv_rmssd_milli": 66.795555,
+      "resting_heart_rate": 52.0,
+      "ctl": 45.8,
+      "atl": 53.8,
+      "tsb": -8.0,
+      "form_label": "neutral",
+      "fitness_phase": "building",
+      "ctl_7d_delta": 1.5,
+      "training_monotony_7d": 2.96
     }
   ]
 }
