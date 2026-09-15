@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-14T11:04:59.097081+00:00",
-  "row_count": 13,
+  "generated_at": "2026-09-15T10:35:01.908616+00:00",
+  "row_count": 14,
   "description": "Weekly training summary: CTL/ATL/TSB end-of-week snapshots, run volume, recovery, and week-over-week deltas.",
   "rows": [
     {
@@ -365,6 +365,34 @@
       "ctl_wow_delta": -1.9,
       "tss_wow_delta": -174.5,
       "distance_wow_delta_km": -15.2,
+      "load_spike_flag": false
+    },
+    {
+      "week_start": "2026-09-14",
+      "week_end": "2026-09-20",
+      "user_id": "38501819",
+      "tracked_days": 1,
+      "total_weekly_tss": 60.8,
+      "avg_daily_tss": 60.8,
+      "week_end_ctl": 45.2,
+      "week_end_atl": 40.8,
+      "week_end_tsb": 4.4,
+      "week_end_form": "neutral",
+      "fitness_phase": "declining",
+      "avg_recovery": null,
+      "avg_hrv_rmssd": null,
+      "avg_rhr": null,
+      "avg_monotony": 1.87,
+      "hard_days": 1,
+      "easy_or_rest_days": 0,
+      "run_count": 0,
+      "total_distance_km": null,
+      "total_run_minutes": null,
+      "avg_pace_min_per_km": null,
+      "avg_run_hr": null,
+      "ctl_wow_delta": -0.7,
+      "tss_wow_delta": -140.1,
+      "distance_wow_delta_km": -7.74,
       "load_spike_flag": false
     }
   ]
